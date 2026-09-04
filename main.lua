@@ -2,7 +2,7 @@
     ╔═══════════════════════════════════════════════════════════╗
     ║     EXILES SCRIPT HUB  ·  MASTER ENTRY POINT              ║
     ║     Architecture : Modular MVC                             ║
-    ║     Library      : WindUI (Footagesus)                     ║
+    ║     Library      : RedzLib (RedzHub UI)                    ║
     ║     Game         : Steal An Egg (ID: 107778070777162)      ║
     ║     Author       : DEV ZAX                                 ║
     ╚═══════════════════════════════════════════════════════════╝
@@ -15,17 +15,46 @@ if game.PlaceId ~= TARGET_PLACE_ID and game.GameId ~= TARGET_PLACE_ID then
         .. " (Target: " .. tostring(TARGET_PLACE_ID) .. ")")
 end
 
--- ── WindUI Loader ─────────────────────────────────────────────────────────
-local loadOk, WindUI = pcall(function()
-    return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-end)
+-- ── RedzLib UI Loader (Multi-Source Robust Loader) ─────────────────────────
+local REDZ_URLS = {
+    "https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui",
+    "https://raw.githubusercontent.com/kingsoluctionsforce-droid/1010183818289192028382899283818283828918282719393828283838828182838/refs/heads/main/REDzHubui",
+    "https://raw.githubusercontent.com/mmtandico/ExilesHub/refs/heads/main/src/ui/redzlib.lua"
+}
 
-if not loadOk or not WindUI then
-    warn("[Exiles Hub] Failed to load WindUI: " .. tostring(WindUI))
+local redzlib = nil
+for _, url in ipairs(REDZ_URLS) do
+    local ok, res = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    if ok and res and type(res.MakeWindow) == "function" then
+        redzlib = res
+        break
+    end
+end
+
+-- Fallback to local file if available in executor filesystem
+if not redzlib and typeof(readfile) == "function" and typeof(isfile) == "function" then
+    for _, path in ipairs({ "src/ui/redzlib.lua", "Exiles/src/ui/redzlib.lua" }) do
+        if isfile(path) then
+            local fn = loadstring(readfile(path))
+            if fn then
+                local ok, res = pcall(fn)
+                if ok and res and type(res.MakeWindow) == "function" then
+                    redzlib = res
+                    break
+                end
+            end
+        end
+    end
+end
+
+if not redzlib then
+    warn("[Exiles Hub] Failed to load RedzLib.")
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title    = "Exiles Hub Error",
-            Text     = "Failed to load WindUI. Check connection.",
+            Text     = "Failed to load RedzLib. Check network connection.",
             Duration = 5,
         })
     end)
@@ -95,6 +124,6 @@ Modules.Visuals.Init(HubState, Helpers)
 
 -- ── Build & Render UI ─────────────────────────────────────────────────────
 local UILayout = Require("ui/layout.lua")
-local Window = UILayout.Build(WindUI, HubState, Helpers, Modules)
+local Window = UILayout.Build(redzlib, HubState, Helpers, Modules)
 
-print("[Exiles Hub] WindUI modular hub initialized — DEV ZAX")
+print("[Exiles Hub] RedzLib modular hub initialized — DEV ZAX")
