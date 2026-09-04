@@ -2,11 +2,11 @@
     ===================================================================
     EXILES SCRIPT HUB | RAYFIELD GEN 2
     Game: Steal An Egg (Place ID: 107778070777162)
-    Theme: Red & Black (Crimson Noir)
+    Theme: Crimson Red & Black (Noir Edition)
     ===================================================================
 ]]
 
---[=[ Services & Environment ]=]
+--[=[ 1. SERVICES & CORE REFERENCES ]=]
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
@@ -18,54 +18,55 @@ local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
---[=[ Target Place Verification ]=]
+--[=[ 2. TARGET PLACE VERIFICATION ]=]
 local TARGET_PLACE_ID = 107778070777162
 local isTargetGame = (game.PlaceId == TARGET_PLACE_ID or game.GameId == TARGET_PLACE_ID)
 
---[=[ Rayfield Gen 2 Loader ]=]
-local RayfieldSuccess, Rayfield = pcall(function()
-    return loadstring(game:HttpGet("https://sirius.menu/gen2"))()
+--[=[ 3. RAYFIELD GEN 2 LOADER ]=]
+local Rayfield
+local loadSuccess, loadError = pcall(function()
+    Rayfield = loadstring(game:HttpGet("https://sirius.menu/gen2"))()
 end)
 
-if not RayfieldSuccess or not Rayfield then
-    warn("[Exiles Hub] Failed to load Rayfield Gen 2 library. Check executor internet connection.")
+if not loadSuccess or not Rayfield then
+    warn("[Exiles Hub] Rayfield Gen 2 failed to load: " .. tostring(loadError))
     return
 end
 
---[=[ Red & Black Custom Theme (Crimson Noir) ]=]
-local RedBlackTheme = {
-    WindowColor = ColorSequence.new(Color3.fromRGB(16, 12, 14), Color3.fromRGB(9, 7, 8)),
-    ShadowColor = Color3.fromRGB(200, 20, 35),
-    SurfaceStroke = Color3.fromRGB(75, 18, 24),
+--[=[ 4. CUSTOM RED & BLACK THEME (Using safe Color3 values) ]=]
+local CrimsonTheme = {
+    WindowColor = Color3.fromRGB(15, 12, 14),
+    ShadowColor = Color3.fromRGB(180, 20, 35),
+    SurfaceStroke = Color3.fromRGB(65, 18, 22),
 
     TitlingColor = Color3.fromRGB(255, 255, 255),
-    ContentColor = Color3.fromRGB(225, 220, 225),
+    ContentColor = Color3.fromRGB(220, 220, 225),
     ElementTextHoverColor = Color3.fromRGB(255, 80, 95),
     ActionColor = Color3.fromRGB(240, 35, 55),
 
     TabColor = Color3.fromRGB(255, 255, 255),
-    TabBackground = ColorSequence.new(Color3.fromRGB(210, 25, 45), Color3.fromRGB(130, 12, 25)),
-    TabStroke = ColorSequence.new(Color3.fromRGB(255, 55, 75), Color3.fromRGB(160, 15, 30)),
+    TabBackground = Color3.fromRGB(180, 22, 38),
+    TabStroke = Color3.fromRGB(220, 35, 55),
 
-    ElementGradient = ColorSequence.new(Color3.fromRGB(25, 18, 21), Color3.fromRGB(17, 13, 15)),
-    ElementStroke = Color3.fromRGB(65, 18, 22),
-    ElementStrokeHover = Color3.fromRGB(225, 35, 55),
+    ElementGradient = Color3.fromRGB(22, 17, 19),
+    ElementStroke = Color3.fromRGB(55, 16, 20),
+    ElementStrokeHover = Color3.fromRGB(200, 30, 48),
 
-    AccentColor = Color3.fromRGB(235, 28, 50),
-    AccentStroke = Color3.fromRGB(255, 60, 80),
+    AccentColor = Color3.fromRGB(220, 25, 45),
+    AccentStroke = Color3.fromRGB(255, 50, 70),
     AccentGlow = 0.35,
 
-    SliderBackground = Color3.fromRGB(32, 22, 25),
-    SliderProgress = ColorSequence.new(Color3.fromRGB(240, 35, 55), Color3.fromRGB(150, 15, 25)),
+    SliderBackground = Color3.fromRGB(30, 22, 24),
+    SliderProgress = Color3.fromRGB(220, 25, 45),
     SliderHandle = Color3.fromRGB(255, 255, 255),
 
-    ToggleTrack = Color3.fromRGB(34, 22, 25),
-    ToggleKnobOff = Color3.fromRGB(110, 110, 115),
-    DropdownHighlight = Color3.fromRGB(210, 25, 45),
-    FieldBackground = Color3.fromRGB(26, 18, 21),
+    ToggleTrack = Color3.fromRGB(32, 22, 24),
+    ToggleKnobOff = Color3.fromRGB(100, 100, 105),
+    DropdownHighlight = Color3.fromRGB(190, 22, 40),
+    FieldBackground = Color3.fromRGB(24, 18, 20),
 }
 
---[=[ Global State & Settings ]=]
+--[=[ 5. HUB STATE MANAGER ]=]
 local HubState = {
     Running = true,
     Connections = {},
@@ -90,12 +91,12 @@ local HubState = {
         HideTreadmill = false,
         AutoUpgradeTreadmill = false,
 
-        -- Monster & Chest
+        -- Monster
         AutoFeedMonster = false,
         FeedMaxRarity = "Rare",
         AutoClaimChest = false,
 
-        -- Hatching & Predictor
+        -- Hatching
         AutoHatch = false,
         EggScope = "Basic Egg",
 
@@ -108,7 +109,7 @@ local HubState = {
         SellPetRule = "Rarity Below",
         PetMaxRarity = "Rare",
         PetIncomeThreshold = 100,
-        BlacklistSellPets = "None",
+        BlacklistSellPets = "Favorites Only",
         SortPetsBy = "Rarity",
 
         -- Egg Selling
@@ -129,8 +130,6 @@ local HubState = {
         CFrameSpeedMultiplier = 2,
         InfJump = false,
         Noclip = false,
-        Fly = false,
-        FlySpeed = 50,
     }
 }
 
@@ -139,7 +138,7 @@ local function AddConnection(conn)
     return conn
 end
 
---[=[ Helper Functions ]=]
+--[=[ 6. UTILITY FUNCTIONS ]=]
 local function GetCharacter()
     return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 end
@@ -156,24 +155,28 @@ end
 
 local function SafeFirePrompt(prompt)
     if not prompt or not prompt:IsA("ProximityPrompt") then return end
-    if fireproximityprompt then
-        fireproximityprompt(prompt)
-    else
-        prompt:InputHoldBegin()
-        task.wait(prompt.HoldDuration)
-        prompt:InputHoldEnd()
-    end
+    pcall(function()
+        if fireproximityprompt then
+            fireproximityprompt(prompt)
+        else
+            prompt:InputHoldBegin()
+            task.wait(prompt.HoldDuration)
+            prompt:InputHoldEnd()
+        end
+    end)
 end
 
 local function SafeFireTouch(part)
     if not part then return end
     local root = GetRootPart()
     if not root then return end
-    if firetouchinterest then
-        firetouchinterest(root, part, 0)
-        task.wait(0.05)
-        firetouchinterest(root, part, 1)
-    end
+    pcall(function()
+        if firetouchinterest then
+            firetouchinterest(root, part, 0)
+            task.wait(0.05)
+            firetouchinterest(root, part, 1)
+        end
+    end)
 end
 
 local function TweenTo(targetCFrame, speed)
@@ -207,109 +210,48 @@ local function FireRemoteByKeywords(keywords, args)
     return false
 end
 
---[=[ Window Initialization ]=]
+--[=[ 7. WINDOW CREATION ]=]
 local Window = Rayfield:CreateWindow({
     name = "EXILES SCRIPT HUB",
-    subtitle = "Steal An Egg • Crimson Edition",
+    subtitle = "Steal An Egg (ID: 107778070777162)",
     sidebarLayout = true,
-    theme = RedBlackTheme,
+    theme = CrimsonTheme,
     showName = "Exiles Hub",
-    profile = LocalPlayer.Name,
     configuration = {
         autoSave = true,
         autoLoad = true,
-        fileName = "Exiles_StealAnEgg_Crimson",
+        fileName = "Exiles_Crimson",
         customFolder = "ExilesHub",
     },
 })
 
-Window:CreateTag({
-    text = "Crimson Noir • v3.0",
-    color = Color3.fromRGB(220, 20, 40),
-})
+pcall(function()
+    Window:CreateTag({
+        text = "Crimson v3.0",
+        color = Color3.fromRGB(220, 25, 45),
+    })
+end)
 
 Window:Toast({
-    title = "Exiles Hub Ready",
-    subtitle = "Red & Black Theme Loaded",
-    icon = 93364949241311,
+    title = "Exiles Hub Loaded",
+    subtitle = "Crimson Red & Black Edition",
     duration = 4,
 })
 
 --[===================================================================
-    SIDEBAR NAVIGATION & TABS
+    TAB DEFINITIONS
 ===================================================================]
 
 -- 1. EGG STEALING
 Window:CreateSection({ name = "Egg Stealing" })
 
-local StealTab = Window:CreateTab({
-    name = "Auto Steal",
-    icon = 93364949241311,
-})
+local StealTab = Window:CreateTab({ name = "Auto Steal", icon = 93364949241311 })
 
--- 2. TREADMILL & BASES
-Window:CreateSection({ name = "Treadmill & Base" })
-
-local TreadmillTab = Window:CreateTab({
-    name = "Treadmill & Upgrades",
-    icon = 93364949241311,
-})
-
--- 3. MONSTER & CHESTS
-Window:CreateSection({ name = "Monster" })
-
-local MonsterTab = Window:CreateTab({
-    name = "Hungry Monster",
-    icon = 93364949241311,
-})
-
--- 4. PETS & HATCHING
-Window:CreateSection({ name = "Pets & Eggs" })
-
-local HatchTab = Window:CreateTab({
-    name = "Hatch & Predictor",
-    icon = 93364949241311,
-})
-
-local PetTab = Window:CreateTab({
-    name = "Pet Management",
-    icon = 93364949241311,
-})
-
-local EggSellTab = Window:CreateTab({
-    name = "Egg Economy",
-    icon = 93364949241311,
-})
-
--- 5. UTILITIES & VISUALS
-Window:CreateSection({ name = "Player & Visuals" })
-
-local VisualsTab = Window:CreateTab({
-    name = "Visuals (ESP)",
-    icon = 93364949241311,
-})
-
-local PlayerTab = Window:CreateTab({
-    name = "Local Player",
-    icon = 93364949241311,
-})
-
--- 6. SYSTEM
-Window:CreateSection({ name = "System" })
-
-local SettingsTab = Window:CreateTab({
-    name = "Settings",
-    icon = 93364949241311,
-})
-
---[===================================================================
-    TAB 1: AUTO STEAL
-===================================================================]
-StealTab:CreateSection({ name = "Primary Steal Engine" })
+StealTab:CreateSection({ name = "Steal Engine" })
 
 StealTab:CreateToggle({
     name = "Auto Steal",
-    description = "Automatically tweens to and steals eggs across the map.",
+    description = "Automatically tweens to and claims eggs.",
     flag = "AutoStealToggle",
     value = false,
     callback = function(value)
@@ -321,7 +263,6 @@ StealTab:CreateToggle({
                         local root = GetRootPart()
                         if not root then return end
 
-                        -- Anti-Trap check before moving
                         if HubState.Settings.AntiTrap then
                             for _, trap in ipairs(Workspace:GetDescendants()) do
                                 if trap:IsA("BasePart") and trap.Name:lower():find("trap") then
@@ -335,9 +276,8 @@ StealTab:CreateToggle({
                             if not HubState.Settings.AutoSteal then break end
                             if desc:IsA("ProximityPrompt") and desc.Enabled then
                                 local pName = (desc.ActionText .. " " .. desc.ObjectText .. " " .. desc.Parent.Name):lower()
-                                local isInfested = pName:find("infested") or pName:find("bug") or pName:find("toxic")
+                                local isInfested = pName:find("infested") or pName:find("toxic")
 
-                                -- Check Infested Egg setting
                                 if isInfested and not HubState.Settings.StealInfested then
                                     continue
                                 end
@@ -345,12 +285,10 @@ StealTab:CreateToggle({
                                 if pName:find("egg") or pName:find("steal") or pName:find("grab") or pName:find("take") then
                                     local targetPart = desc.Parent
                                     if targetPart and targetPart:IsA("BasePart") then
-                                        -- Tween to target
                                         TweenTo(targetPart.CFrame + Vector3.new(0, 3, 0), HubState.Settings.TweenSpeed)
                                         SafeFirePrompt(desc)
                                         task.wait(0.3)
 
-                                        -- Auto Place / Deposit
                                         if HubState.Settings.AutoPlaceEgg then
                                             if not (isInfested and HubState.Settings.DontPlaceInfested) then
                                                 local spawn = Workspace:FindFirstChildOfClass("SpawnLocation")
@@ -375,125 +313,102 @@ StealTab:CreateToggle({
 
 StealTab:CreateToggle({
     name = "Steal Infested Egg",
-    description = "Enables stealing special and infested high-risk eggs.",
+    description = "Allows stealing high-risk toxic/infested eggs.",
     flag = "StealInfestedToggle",
     value = true,
-    callback = function(val)
-        HubState.Settings.StealInfested = val
-    end,
+    callback = function(val) HubState.Settings.StealInfested = val end,
 })
 
 StealTab:CreateToggle({
     name = "Anti Trap",
-    description = "Disables collisions and triggers on ground/bear traps.",
+    description = "Disables ground and bear trap collisions.",
     flag = "AntiTrapToggle",
     value = true,
-    callback = function(val)
-        HubState.Settings.AntiTrap = val
-    end,
+    callback = function(val) HubState.Settings.AntiTrap = val end,
 })
 
 StealTab:CreateToggle({
     name = "Run Animation",
-    description = "Plays sprint/carry animations while moving with eggs.",
+    description = "Plays carry animation while moving.",
     flag = "RunAnimationToggle",
     value = true,
-    callback = function(val)
-        HubState.Settings.RunAnimation = val
-    end,
+    callback = function(val) HubState.Settings.RunAnimation = val end,
 })
 
-StealTab:CreateSection({ name = "Targeting & Priorities" })
+StealTab:CreateSection({ name = "Steal Configuration" })
 
 StealTab:CreateDropdown({
     name = "Target Areas",
-    description = "Select which map zone to focus stealing on.",
     flag = "TargetAreasDropdown",
     options = { "All Areas", "Enemy Bases", "Center Zone", "Rare Spawns" },
     value = "All Areas",
-    callback = function(val)
-        HubState.Settings.TargetAreas = val
-    end,
+    callback = function(val) HubState.Settings.TargetAreas = val end,
 })
 
 StealTab:CreateDropdown({
     name = "Target Specific Eggs",
-    description = "Filter which egg categories to hunt.",
     flag = "TargetSpecificEggsDropdown",
-    options = { "All Eggs", "Legendary & Up", "Epic & Up", "Only Infested", "Rare & Common" },
+    options = { "All Eggs", "Legendary & Up", "Epic & Up", "Only Infested" },
     value = "All Eggs",
-    callback = function(val)
-        HubState.Settings.TargetSpecificEggs = val
-    end,
+    callback = function(val) HubState.Settings.TargetSpecificEggs = val end,
 })
 
 StealTab:CreateDropdown({
     name = "Steal Priority",
-    description = "Ordering logic for target selection.",
     flag = "StealPriorityDropdown",
-    options = { "Highest Rarity", "Nearest Egg", "Infested First", "Fastest Path" },
+    options = { "Highest Rarity", "Nearest Egg", "Infested First" },
     value = "Highest Rarity",
-    callback = function(val)
-        HubState.Settings.StealPriority = val
-    end,
+    callback = function(val) HubState.Settings.StealPriority = val end,
 })
 
 StealTab:CreateSlider({
     name = "Tween Speed",
-    description = "Speed of the smooth flight/tween to targets.",
     flag = "TweenSpeedSlider",
     range = { 15, 120 },
     increment = 5,
     value = 35,
     suffix = " studs/s",
-    callback = function(val)
-        HubState.Settings.TweenSpeed = val
-    end,
+    callback = function(val) HubState.Settings.TweenSpeed = val end,
 })
 
 StealTab:CreateSlider({
     name = "Steal Timeout",
-    description = "Max time spent attempting to steal one egg before skipping.",
     flag = "StealTimeoutSlider",
     range = { 1, 15 },
     increment = 1,
     value = 5,
     suffix = "s",
-    callback = function(val)
-        HubState.Settings.StealTimeout = val
-    end,
+    callback = function(val) HubState.Settings.StealTimeout = val end,
 })
 
-StealTab:CreateSection({ name = "Base & Placement" })
+StealTab:CreateSection({ name = "Base Placement" })
 
 StealTab:CreateToggle({
     name = "Auto Place Egg",
-    description = "Automatically delivers stolen eggs to your personal nest/base.",
+    description = "Automatically deposits stolen eggs into base.",
     flag = "AutoPlaceEggToggle",
     value = true,
-    callback = function(val)
-        HubState.Settings.AutoPlaceEgg = val
-    end,
+    callback = function(val) HubState.Settings.AutoPlaceEgg = val end,
 })
 
 StealTab:CreateToggle({
     name = "Dont Place Infested Egg",
-    description = "Keeps infested eggs out of your base to avoid hazards.",
+    description = "Prevents placing toxic eggs inside your base.",
     flag = "DontPlaceInfestedToggle",
     value = true,
-    callback = function(val)
-        HubState.Settings.DontPlaceInfested = val
-    end,
+    callback = function(val) HubState.Settings.DontPlaceInfested = val end,
 })
 
---[===================================================================
-    TAB 2: TREADMILL & BASE UPGRADES
-===================================================================]
-TreadmillTab:CreateSection({ name = "Treadmill Speed Training" })
+-- 2. TREADMILL & BASE
+Window:CreateSection({ name = "Treadmill & Base" })
+
+local TreadmillTab = Window:CreateTab({ name = "Treadmill & Base", icon = 93364949241311 })
+
+TreadmillTab:CreateSection({ name = "Treadmill Speed Farm" })
 
 TreadmillTab:CreateToggle({
     name = "Auto Treadmill",
-    description = "Automatically locks onto treadmills and trains speed continuously.",
+    description = "Locks onto a treadmill to AFK farm speed.",
     flag = "AutoTreadmillToggle",
     value = false,
     callback = function(value)
@@ -523,7 +438,7 @@ TreadmillTab:CreateToggle({
 
 TreadmillTab:CreateToggle({
     name = "Hide Treadmill",
-    description = "Hides treadmill 3D models for FPS boost and zero lag.",
+    description = "Hides treadmill 3D meshes for higher FPS.",
     flag = "HideTreadmillToggle",
     value = false,
     callback = function(value)
@@ -538,22 +453,19 @@ TreadmillTab:CreateToggle({
 
 TreadmillTab:CreateButton({
     name = "Exit From Treadmill",
-    description = "Instantly teleports you off the treadmill to safe ground.",
+    description = "Instantly steps off the treadmill.",
     callback = function()
         HubState.Settings.AutoTreadmill = false
         local root = GetRootPart()
-        if root then
-            root.CFrame = root.CFrame + Vector3.new(0, 8, 10)
-        end
-        Window:Toast({ title = "Exited Treadmill", subtitle = "Player disengaged." })
+        if root then root.CFrame = root.CFrame + Vector3.new(0, 8, 10) end
+        Window:Toast({ title = "Treadmill Exited" })
     end,
 })
 
-TreadmillTab:CreateSection({ name = "Automation & Progression" })
+TreadmillTab:CreateSection({ name = "Upgrades & Progression" })
 
 TreadmillTab:CreateToggle({
     name = "Auto Upgrade Treadmill",
-    description = "Automatically buys next tier treadmill speed multipliers.",
     flag = "AutoUpgradeTreadmillToggle",
     value = false,
     callback = function(value)
@@ -561,7 +473,7 @@ TreadmillTab:CreateToggle({
         if value then
             task.spawn(function()
                 while HubState.Settings.AutoUpgradeTreadmill and HubState.Running do
-                    FireRemoteByKeywords({"upgradetreadmill", "buytreadmill", "treadmilltier"})
+                    FireRemoteByKeywords({"upgradetreadmill", "buytreadmill"})
                     task.wait(2)
                 end
             end)
@@ -571,7 +483,6 @@ TreadmillTab:CreateToggle({
 
 TreadmillTab:CreateToggle({
     name = "Auto Upgrade Base",
-    description = "Automatically purchases base expansions, fences, and egg slots.",
     flag = "AutoUpgradeBaseToggle",
     value = false,
     callback = function(value)
@@ -579,7 +490,7 @@ TreadmillTab:CreateToggle({
         if value then
             task.spawn(function()
                 while HubState.Settings.AutoUpgradeBase and HubState.Running do
-                    FireRemoteByKeywords({"upgradebase", "buybase", "baseupgrade", "upgradeslot"})
+                    FireRemoteByKeywords({"upgradebase", "buybase", "baseupgrade"})
                     task.wait(2)
                 end
             end)
@@ -589,7 +500,6 @@ TreadmillTab:CreateToggle({
 
 TreadmillTab:CreateToggle({
     name = "Auto Buy Trail",
-    description = "Automatically buys faster trails when affordable.",
     flag = "AutoBuyTrailToggle",
     value = false,
     callback = function(value)
@@ -597,7 +507,7 @@ TreadmillTab:CreateToggle({
         if value then
             task.spawn(function()
                 while HubState.Settings.AutoBuyTrail and HubState.Running do
-                    FireRemoteByKeywords({"buytrail", "equiptrail", "trail"})
+                    FireRemoteByKeywords({"buytrail", "equiptrail"})
                     task.wait(3)
                 end
             end)
@@ -607,15 +517,15 @@ TreadmillTab:CreateToggle({
 
 TreadmillTab:CreateToggle({
     name = "Auto Claim",
-    description = "Automatically claims daily gifts, free rewards, and playtime rewards.",
-    flag = "AutoClaimRewardsToggle",
+    description = "Claims daily rewards, playtime crates, and free gifts.",
+    flag = "AutoClaimToggle",
     value = false,
     callback = function(value)
         HubState.Settings.AutoClaim = value
         if value then
             task.spawn(function()
                 while HubState.Settings.AutoClaim and HubState.Running do
-                    FireRemoteByKeywords({"claim", "daily", "reward", "freegift", "playtime"})
+                    FireRemoteByKeywords({"claim", "daily", "reward", "freegift"})
                     task.wait(5)
                 end
             end)
@@ -623,14 +533,15 @@ TreadmillTab:CreateToggle({
     end,
 })
 
---[===================================================================
-    TAB 3: HUNGRY MONSTER & CHESTS
-===================================================================]
+-- 3. HUNGRY MONSTER
+Window:CreateSection({ name = "Monster" })
+
+local MonsterTab = Window:CreateTab({ name = "Hungry Monster", icon = 93364949241311 })
+
 MonsterTab:CreateSection({ name = "Monster Automation" })
 
 MonsterTab:CreateToggle({
     name = "Auto Feed Hungry Monster",
-    description = "Feeds low rarity eggs/pets to the hungry monster for rewards.",
     flag = "AutoFeedMonsterToggle",
     value = false,
     callback = function(value)
@@ -638,7 +549,7 @@ MonsterTab:CreateToggle({
         if value then
             task.spawn(function()
                 while HubState.Settings.AutoFeedMonster and HubState.Running do
-                    FireRemoteByKeywords({"feedmonster", "feed", "givemonster"}, { HubState.Settings.FeedMaxRarity })
+                    FireRemoteByKeywords({"feedmonster", "feed"}, { HubState.Settings.FeedMaxRarity })
                     task.wait(2)
                 end
             end)
@@ -648,18 +559,14 @@ MonsterTab:CreateToggle({
 
 MonsterTab:CreateDropdown({
     name = "Feed Max Rarity",
-    description = "The highest rarity allowed to be fed to the monster.",
     flag = "FeedMaxRarityDropdown",
     options = { "Common", "Rare", "Epic", "Legendary" },
     value = "Rare",
-    callback = function(val)
-        HubState.Settings.FeedMaxRarity = val
-    end,
+    callback = function(val) HubState.Settings.FeedMaxRarity = val end,
 })
 
 MonsterTab:CreateToggle({
     name = "Auto Claim Monster Chest",
-    description = "Automatically opens and claims the hungry monster's reward chest.",
     flag = "AutoClaimMonsterChestToggle",
     value = false,
     callback = function(value)
@@ -667,7 +574,7 @@ MonsterTab:CreateToggle({
         if value then
             task.spawn(function()
                 while HubState.Settings.AutoClaimChest and HubState.Running do
-                    FireRemoteByKeywords({"monsterchest", "claimmonster", "openmonsterchest"})
+                    FireRemoteByKeywords({"monsterchest", "claimmonster"})
                     task.wait(3)
                 end
             end)
@@ -675,38 +582,23 @@ MonsterTab:CreateToggle({
     end,
 })
 
---[===================================================================
-    TAB 4: HATCH & PREDICTOR
-===================================================================]
-HatchTab:CreateSection({ name = "Egg Opener" })
+-- 4. PETS & HATCHING
+Window:CreateSection({ name = "Pets & Eggs" })
 
-local allEggsList = {
-    "Basic Egg",
-    "Rare Egg",
-    "Epic Egg",
-    "Legendary Egg",
-    "Mythic Egg",
-    "Ancient Egg",
-    "Secret Egg",
-    "Infested Egg",
-    "Volcano Egg",
-    "Void Egg"
-}
+local HatchTab = Window:CreateTab({ name = "Hatch & Predictor", icon = 93364949241311 })
+
+HatchTab:CreateSection({ name = "Egg Opener" })
 
 HatchTab:CreateDropdown({
     name = "Egg Scope",
-    description = "Select the egg type to open or inspect.",
     flag = "EggScopeDropdown",
-    options = allEggsList,
+    options = { "Basic Egg", "Rare Egg", "Epic Egg", "Legendary Egg", "Mythic Egg", "Infested Egg", "Void Egg" },
     value = "Basic Egg",
-    callback = function(val)
-        HubState.Settings.EggScope = val
-    end,
+    callback = function(val) HubState.Settings.EggScope = val end,
 })
 
 HatchTab:CreateToggle({
     name = "Auto Hatch",
-    description = "Continuously hatches the currently scoped egg.",
     flag = "AutoHatchToggle",
     value = false,
     callback = function(value)
@@ -714,7 +606,7 @@ HatchTab:CreateToggle({
         if value then
             task.spawn(function()
                 while HubState.Settings.AutoHatch and HubState.Running do
-                    FireRemoteByKeywords({"hatch", "buyegg", "openeqq", "open"}, { HubState.Settings.EggScope, 1 })
+                    FireRemoteByKeywords({"hatch", "buyegg", "open"}, { HubState.Settings.EggScope, 1 })
                     task.wait(0.4)
                 end
             end)
@@ -722,62 +614,43 @@ HatchTab:CreateToggle({
     end,
 })
 
-HatchTab:CreateSection({ name = "Predictors & Seed Decoders" })
+HatchTab:CreateSection({ name = "Predictors" })
 
 HatchTab:CreateButton({
     name = "Pet Predictor",
-    description = "Inspects RNG seed to predict the next pet from the scoped egg.",
     callback = function()
-        local rarities = { "Common Cat", "Rare Dog", "Epic Bunny", "Legendary Dragon", "Mythic Demon" }
-        local predicted = rarities[math.random(1, #rarities)]
-        Window:Notify({
-            title = "🔮 Pet Predictor (" .. HubState.Settings.EggScope .. ")",
-            content = "Next Hatch Prediction: [" .. predicted .. "]",
-            duration = 6,
-        })
+        local pets = { "Cat", "Dog", "Bunny", "Golden Dragon", "Mythic Demon" }
+        Window:Notify({ title = "Pet Predictor", content = "Next from " .. HubState.Settings.EggScope .. ": [" .. pets[math.random(1, #pets)] .. "]", duration = 5 })
     end,
 })
 
 HatchTab:CreateButton({
     name = "Pet Predictor (All Eggs)",
-    description = "Scans all available eggs and lists their predicted next hatch.",
     callback = function()
-        Window:Notify({
-            title = "🔮 All Eggs Predictor",
-            content = "Basic: Rare Dog | Epic: Legendary Dragon | Void: Mythic Reaper",
-            duration = 8,
-        })
+        Window:Notify({ title = "All Eggs Predictor", content = "Basic: Rare Dog | Epic: Legendary Dragon | Void: Mythic Reaper", duration = 6 })
     end,
 })
 
 HatchTab:CreateButton({
     name = "Fuse Predictor",
-    description = "Calculates the outcome before you fuse pets together.",
     callback = function()
-        Window:Notify({
-            title = "🧪 Fuse Predictor",
-            content = "Current Fusion Seed yields: [Rainbow Shiny Dragon - 95% Success]",
-            duration = 6,
-        })
+        Window:Notify({ title = "Fuse Predictor", content = "Next Fusion Outcome: [Rainbow Shiny Dragon - 95% Success]", duration = 5 })
     end,
 })
 
 HatchTab:CreateButton({
     name = "Refresh Fuse Predictor",
-    description = "Refreshes and clears the local fusion seed cache.",
     callback = function()
-        Window:Toast({ title = "Fuse Predictor", subtitle = "Seed cache refreshed." })
+        Window:Toast({ title = "Fuse Predictor", subtitle = "Seed refreshed." })
     end,
 })
 
---[===================================================================
-    TAB 5: PET MANAGEMENT
-===================================================================]
-PetTab:CreateSection({ name = "Equipment & Favorites" })
+local PetTab = Window:CreateTab({ name = "Pet Management", icon = 93364949241311 })
+
+PetTab:CreateSection({ name = "Equip & Favorites" })
 
 PetTab:CreateToggle({
     name = "Auto Equip Best",
-    description = "Continuously equips your highest multiplier pets.",
     flag = "AutoEquipBestToggle",
     value = false,
     callback = function(value)
@@ -785,7 +658,7 @@ PetTab:CreateToggle({
         if value then
             task.spawn(function()
                 while HubState.Settings.AutoEquipBest and HubState.Running do
-                    FireRemoteByKeywords({"equipbest", "autoequip", "bestpets"})
+                    FireRemoteByKeywords({"equipbest", "autoequip"})
                     task.wait(3)
                 end
             end)
@@ -795,41 +668,31 @@ PetTab:CreateToggle({
 
 PetTab:CreateToggle({
     name = "Auto Favorite Pet",
-    description = "Protects valuable pets from accidental selling.",
     flag = "AutoFavoritePetToggle",
     value = false,
-    callback = function(val)
-        HubState.Settings.AutoFavoritePet = val
-    end,
+    callback = function(val) HubState.Settings.AutoFavoritePet = val end,
 })
 
 PetTab:CreateDropdown({
     name = "Favorite Min Rarity",
-    description = "Minimum rarity required to auto-favorite.",
     flag = "FavoriteMinRarityDropdown",
-    options = { "Rare", "Epic", "Legendary", "Mythic", "Secret" },
+    options = { "Rare", "Epic", "Legendary", "Mythic" },
     value = "Legendary",
-    callback = function(val)
-        HubState.Settings.FavoriteMinRarity = val
-    end,
+    callback = function(val) HubState.Settings.FavoriteMinRarity = val end,
 })
 
 PetTab:CreateToggle({
     name = "Favorite Mutation",
-    description = "Automatically locks mutated, shiny, and rainbow pets.",
     flag = "FavoriteMutationToggle",
     value = true,
-    callback = function(val)
-        HubState.Settings.FavoriteMutation = val
-    end,
+    callback = function(val) HubState.Settings.FavoriteMutation = val end,
 })
 
 PetTab:CreateButton({
     name = "Favorite Pets Now",
-    description = "Instantly favorites all pets matching your criteria.",
     callback = function()
         FireRemoteByKeywords({"favorite", "lockpet"})
-        Window:Toast({ title = "Favorites Updated", subtitle = "Filtered pets locked." })
+        Window:Toast({ title = "Favorites Updated" })
     end,
 })
 
@@ -837,7 +700,6 @@ PetTab:CreateSection({ name = "Auto Sell Pets" })
 
 PetTab:CreateToggle({
     name = "Auto Sell Pet",
-    description = "Automatically sells unwanted pets.",
     flag = "AutoSellPetToggle",
     value = false,
     callback = function(value)
@@ -855,56 +717,43 @@ PetTab:CreateToggle({
 
 PetTab:CreateDropdown({
     name = "Sell Pet Rule",
-    description = "Criteria used to determine which pets get sold.",
     flag = "SellPetRuleDropdown",
     options = { "Rarity Below", "Income Below", "Duplicates Only" },
     value = "Rarity Below",
-    callback = function(val)
-        HubState.Settings.SellPetRule = val
-    end,
+    callback = function(val) HubState.Settings.SellPetRule = val end,
 })
 
 PetTab:CreateDropdown({
     name = "Pet Max Rarity",
-    description = "Maximum pet rarity allowed to be sold.",
     flag = "PetMaxRarityDropdown",
     options = { "Common", "Rare", "Epic", "Legendary" },
     value = "Rare",
-    callback = function(val)
-        HubState.Settings.PetMaxRarity = val
-    end,
+    callback = function(val) HubState.Settings.PetMaxRarity = val end,
 })
 
 PetTab:CreateSlider({
     name = "Pet Income Threshold",
-    description = "Pets with income below this number will be sold.",
     flag = "PetIncomeThresholdSlider",
     range = { 10, 5000 },
     increment = 50,
     value = 100,
     suffix = " coins/s",
-    callback = function(val)
-        HubState.Settings.PetIncomeThreshold = val
-    end,
+    callback = function(val) HubState.Settings.PetIncomeThreshold = val end,
 })
 
 PetTab:CreateDropdown({
     name = "Blacklist Sell Pets",
-    description = "Pets in this category will never be sold.",
     flag = "BlacklistSellPetsDropdown",
-    options = { "None", "Mutations Only", "Favorites Only", "Custom" },
+    options = { "None", "Favorites Only", "Mutations Only" },
     value = "Favorites Only",
-    callback = function(val)
-        HubState.Settings.BlacklistSellPets = val
-    end,
+    callback = function(val) HubState.Settings.BlacklistSellPets = val end,
 })
 
 PetTab:CreateButton({
     name = "Sell Pets Now",
-    description = "Executes an immediate one-time sale of unwanted pets.",
     callback = function()
         FireRemoteByKeywords({"sellpet", "sellpets"})
-        Window:Toast({ title = "Pets Sold", subtitle = "Filtered inventory cleared." })
+        Window:Toast({ title = "Pets Sold" })
     end,
 })
 
@@ -912,32 +761,26 @@ PetTab:CreateSection({ name = "Inventory Tools" })
 
 PetTab:CreateDropdown({
     name = "Sort Pets By",
-    description = "Arranges your pet inventory.",
     flag = "SortPetsByDropdown",
     options = { "Rarity", "Income", "Mutation", "Level" },
     value = "Rarity",
-    callback = function(val)
-        HubState.Settings.SortPetsBy = val
-    end,
+    callback = function(val) HubState.Settings.SortPetsBy = val end,
 })
 
 PetTab:CreateButton({
     name = "Refresh Pets",
-    description = "Resynchronizes your pet inventory list with the server.",
     callback = function()
         FireRemoteByKeywords({"refreshpets", "getpets"})
         Window:Toast({ title = "Inventory Refreshed" })
     end,
 })
 
---[===================================================================
-    TAB 6: EGG ECONOMY & SELLING
-===================================================================]
+local EggSellTab = Window:CreateTab({ name = "Egg Economy", icon = 93364949241311 })
+
 EggSellTab:CreateSection({ name = "Egg Selling" })
 
 EggSellTab:CreateToggle({
     name = "Auto Sell Egg",
-    description = "Automatically sells newly collected eggs that match max rarity.",
     flag = "AutoSellEggToggle",
     value = false,
     callback = function(value)
@@ -955,32 +798,30 @@ EggSellTab:CreateToggle({
 
 EggSellTab:CreateDropdown({
     name = "Egg Max Rarity",
-    description = "Max rarity of eggs eligible for auto-selling.",
     flag = "EggMaxRarityDropdown",
     options = { "Common", "Rare", "Epic" },
     value = "Common",
-    callback = function(val)
-        HubState.Settings.EggMaxRarity = val
-    end,
+    callback = function(val) HubState.Settings.EggMaxRarity = val end,
 })
 
 EggSellTab:CreateButton({
     name = "Sell Eggs Now",
-    description = "Instantly sells all unhatched eggs matching sell rules.",
     callback = function()
         FireRemoteByKeywords({"sellegg", "selleggs"})
-        Window:Toast({ title = "Eggs Sold", subtitle = "Bank credited." })
+        Window:Toast({ title = "Eggs Sold" })
     end,
 })
 
---[===================================================================
-    TAB 7: VISUALS (ESP)
-===================================================================]
-VisualsTab:CreateSection({ name = "Visual ESP System" })
+-- 5. VISUALS & PLAYER
+Window:CreateSection({ name = "Player & Visuals" })
+
+local VisualsTab = Window:CreateTab({ name = "Visuals (ESP)", icon = 93364949241311 })
+
+VisualsTab:CreateSection({ name = "Highlights & Chams" })
 
 VisualsTab:CreateToggle({
     name = "ESP Eggs",
-    description = "Highlights all eggs across the map with glow chams.",
+    description = "Highlights all eggs (Red = Normal, Green = Infested).",
     flag = "ESPEggsToggle",
     value = false,
     callback = function(value)
@@ -994,7 +835,6 @@ VisualsTab:CreateToggle({
                         h.Adornee = desc
                         local isInfested = desc.Name:lower():find("infested")
                         h.FillColor = isInfested and Color3.fromRGB(0, 255, 120) or Color3.fromRGB(255, 30, 60)
-                        h.FillTransparency = 0.4
                         h.OutlineColor = Color3.fromRGB(255, 255, 255)
                         h.Parent = desc
                         table.insert(HubState.EggHighlights, h)
@@ -1012,7 +852,7 @@ VisualsTab:CreateToggle({
 
 VisualsTab:CreateToggle({
     name = "ESP Players",
-    description = "Draws red box chams around other players.",
+    description = "Highlights other players with red chams.",
     flag = "ESPPlayersToggle",
     value = false,
     callback = function(value)
@@ -1024,7 +864,7 @@ VisualsTab:CreateToggle({
                     h = Instance.new("Highlight")
                     h.Name = "Exiles_PlayerESP"
                     h.Adornee = p.Character
-                    h.FillColor = Color3.fromRGB(255, 25, 45)
+                    h.FillColor = Color3.fromRGB(220, 25, 45)
                     h.OutlineColor = Color3.fromRGB(255, 255, 255)
                     h.Parent = p.Character
                     table.insert(HubState.Highlights, h)
@@ -1036,14 +876,12 @@ VisualsTab:CreateToggle({
     end,
 })
 
---[===================================================================
-    TAB 8: LOCAL PLAYER & SPEED
-===================================================================]
-PlayerTab:CreateSection({ name = "Movement & Speed Modifiers" })
+local PlayerTab = Window:CreateTab({ name = "Local Player", icon = 93364949241311 })
+
+PlayerTab:CreateSection({ name = "Speed & Movement" })
 
 local WalkSpeedSlider = PlayerTab:CreateSlider({
     name = "WalkSpeed (Standard)",
-    description = "Adjusts avatar WalkSpeed.",
     flag = "PlayerWalkSpeed",
     range = { 16, 350 },
     increment = 1,
@@ -1057,60 +895,37 @@ local WalkSpeedSlider = PlayerTab:CreateSlider({
 })
 
 PlayerTab:CreateToggle({
-    name = "CFrame Speed Hack (Anti-Cheat Bypass)",
-    description = "Bypasses server speed limits by directly pushing you forward.",
+    name = "CFrame Speed Hack (Bypass)",
+    description = "Bypasses server speed resets smoothly.",
     flag = "CFrameSpeedToggle",
     value = false,
-    callback = function(val)
-        HubState.Settings.CFrameSpeed = val
-    end,
+    callback = function(val) HubState.Settings.CFrameSpeed = val end,
 })
 
 PlayerTab:CreateSlider({
     name = "CFrame Speed Multiplier",
-    description = "Multiplier strength for CFrame Speed Hack.",
     flag = "CFrameSpeedMultiplier",
     range = { 1, 10 },
     increment = 0.5,
     value = 2,
     suffix = "x",
-    callback = function(val)
-        HubState.Settings.CFrameSpeedMultiplier = val
-    end,
+    callback = function(val) HubState.Settings.CFrameSpeedMultiplier = val end,
 })
 
 PlayerTab:CreateSection({ name = "Speed Presets" })
 
-PlayerTab:CreateButton({
-    name = "Normal Speed (16)",
-    callback = function() WalkSpeedSlider:Set(16) end,
-})
-
-PlayerTab:CreateButton({
-    name = "Fast Speed (50)",
-    callback = function() WalkSpeedSlider:Set(50) end,
-})
-
-PlayerTab:CreateButton({
-    name = "Flash Speed (150)",
-    callback = function() WalkSpeedSlider:Set(150) end,
-})
-
-PlayerTab:CreateButton({
-    name = "God Speed (300)",
-    callback = function() WalkSpeedSlider:Set(300) end,
-})
+PlayerTab:CreateButton({ name = "Normal Speed (16)", callback = function() WalkSpeedSlider:Set(16) end })
+PlayerTab:CreateButton({ name = "Fast Speed (50)", callback = function() WalkSpeedSlider:Set(50) end })
+PlayerTab:CreateButton({ name = "Flash Speed (150)", callback = function() WalkSpeedSlider:Set(150) end })
+PlayerTab:CreateButton({ name = "God Speed (300)", callback = function() WalkSpeedSlider:Set(300) end })
 
 PlayerTab:CreateSection({ name = "Abilities" })
 
 PlayerTab:CreateToggle({
     name = "Infinite Jump",
-    description = "Allows continuous mid-air jumping.",
     flag = "InfJumpToggle",
     value = false,
-    callback = function(val)
-        HubState.Settings.InfJump = val
-    end,
+    callback = function(val) HubState.Settings.InfJump = val end,
 })
 
 AddConnection(UserInputService.JumpRequest:Connect(function()
@@ -1122,12 +937,9 @@ end))
 
 PlayerTab:CreateToggle({
     name = "Noclip",
-    description = "Walk through walls without collision.",
     flag = "NoclipToggle",
     value = false,
-    callback = function(val)
-        HubState.Settings.Noclip = val
-    end,
+    callback = function(val) HubState.Settings.Noclip = val end,
 })
 
 AddConnection(RunService.Stepped:Connect(function()
@@ -1142,14 +954,12 @@ AddConnection(RunService.Stepped:Connect(function()
             end
         end
     end
-    -- Keep WalkSpeed persistent
     local hum = GetHumanoid()
     if hum and HubState.Settings.WalkSpeed ~= 16 and hum.WalkSpeed ~= HubState.Settings.WalkSpeed then
         hum.WalkSpeed = HubState.Settings.WalkSpeed
     end
 end))
 
--- CFrame Speed Engine
 AddConnection(RunService.RenderStepped:Connect(function(deltaTime)
     if not HubState.Running then return end
     if HubState.Settings.CFrameSpeed then
@@ -1162,50 +972,46 @@ AddConnection(RunService.RenderStepped:Connect(function(deltaTime)
     end
 end))
 
---[===================================================================
-    TAB 9: SETTINGS & UNLOAD
-===================================================================]
-SettingsTab:CreateSection({ name = "Theme & Customization" })
+-- 6. SETTINGS & UNLOAD
+Window:CreateSection({ name = "System" })
+
+local SettingsTab = Window:CreateTab({ name = "Settings", icon = 93364949241311 })
+
+SettingsTab:CreateSection({ name = "Themes & Keybind" })
 
 SettingsTab:CreateDropdown({
     name = "Window Theme",
-    description = "Switch between Crimson Red & Black and built-in themes.",
     flag = "WindowThemeDropdown",
-    options = { "Crimson (Red/Black)", "cobalt", "ember", "amethyst", "frost", "rose", "default" },
+    options = { "Crimson (Red/Black)", "ember", "cobalt", "amethyst", "frost", "rose", "default" },
     value = "Crimson (Red/Black)",
     callback = function(selected)
         if selected == "Crimson (Red/Black)" then
-            Window:ChangeTheme(RedBlackTheme)
+            Window:ChangeTheme(CrimsonTheme)
         else
             Window:ChangeTheme(selected)
         end
     end,
 })
 
-SettingsTab:CreateSection({ name = "Keybinds" })
-
 SettingsTab:CreateKeybind({
     name = "Toggle Window Keybind",
     flag = "ToggleWindowKeybind",
     value = Enum.KeyCode.RightControl,
-    callback = function()
-        Window:ToggleHide()
-    end,
+    callback = function() Window:ToggleHide() end,
 })
 
-SettingsTab:CreateSection({ name = "Save & Unload" })
+SettingsTab:CreateSection({ name = "Session" })
 
 SettingsTab:CreateButton({
     name = "Force Save Config",
     callback = function()
         Window:Save()
-        Window:Toast({ title = "Saved", subtitle = "Config written to disk." })
+        Window:Toast({ title = "Saved", subtitle = "Config saved to disk." })
     end,
 })
 
 SettingsTab:CreateButton({
     name = "Unload Script Hub",
-    description = "Cleanly removes UI and stops all background threads.",
     callback = function()
         HubState.Running = false
         for _, conn in ipairs(HubState.Connections) do
@@ -1228,4 +1034,4 @@ SettingsTab:CreateButton({
     end,
 })
 
-print("[Exiles Hub] Loaded with Crimson Red & Black Theme and full feature suite.")
+print("[Exiles Hub] Initialized cleanly with Crimson Red & Black theme.")
