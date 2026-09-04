@@ -13,18 +13,24 @@ if game.PlaceId ~= TARGET_PLACE_ID and game.GameId ~= TARGET_PLACE_ID then
 end
 
 -- Rayfield Gen 2 Loader
-local Rayfield
-local loadOk, loadErr = pcall(function()
+local loadOk, Rayfield = pcall(function()
     return loadstring(game:HttpGet("https://sirius.menu/gen2"))()
 end)
 
 if not loadOk or not Rayfield then
-    warn("[Exiles Hub] Failed to load Rayfield Gen 2: " .. tostring(loadErr))
+    warn("[Exiles Hub] Failed to load Rayfield Gen 2: " .. tostring(Rayfield))
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Exiles Hub Error",
+            Text = "Failed to load Rayfield Gen 2. Check connection.",
+            Duration = 5,
+        })
+    end)
     return
 end
 
 -- Modular Require System (Supports both Local Files & Remote GitHub)
-local GITHUB_SRC_URL = "https://raw.githubusercontent.com/mmtandico/ExilesHub/main/src/"
+local GITHUB_SRC_URL = "https://raw.githubusercontent.com/mmtandico/ExilesHub/refs/heads/main/src/"
 
 local function Require(modulePath)
     -- Check local filesystem first
@@ -45,7 +51,10 @@ local function Require(modulePath)
 
     -- Fallback: Fetch directly from GitHub with cache-busting
     local url = GITHUB_SRC_URL .. modulePath .. "?v=" .. tostring(os.time())
-    local content = game:HttpGet(url)
+    local ok, content = pcall(function() return game:HttpGet(url) end)
+    if not ok or not content or content == "" then
+        error("[Exiles Hub] Network error fetching " .. modulePath .. ": " .. tostring(content))
+    end
     local fn, err = loadstring(content)
     if not fn then
         error("[Exiles Hub] Failed to load module " .. modulePath .. ": " .. tostring(err))

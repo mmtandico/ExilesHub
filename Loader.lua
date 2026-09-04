@@ -45,20 +45,27 @@ if currentGame then
     ShowNotification("Exiles Hub", "Identified game: " .. currentGame.Name .. "\nLoading script...")
     local url = GITHUB_RAW_BASE .. currentGame.Script .. "?v=" .. tostring(os.time())
     local success, err = pcall(function()
-        loadstring(game:HttpGet(url))()
+        local content = game:HttpGet(url)
+        local fn, pErr = loadstring(content)
+        if not fn then error("Parse: " .. tostring(pErr)) end
+        fn()
     end)
     if not success then
-        warn("[Exiles Loader] Failed to load " .. currentGame.Name .. ": " .. tostring(err))
-        ShowNotification("Exiles Hub Error", "Failed to load script. Check console (F9).")
+        warn("[Exiles Loader] Failed: " .. tostring(err))
+        ShowNotification("Exiles Hub Error", string.sub(tostring(err), 1, 90))
     end
 else
     -- Fallback: Load main script
     ShowNotification("Exiles Hub", "Loading Universal Hub...")
     local url = GITHUB_RAW_BASE .. "main.lua?v=" .. tostring(os.time())
     local success, err = pcall(function()
-        loadstring(game:HttpGet(url))()
+        local content = game:HttpGet(url)
+        local fn, pErr = loadstring(content)
+        if not fn then error("Parse: " .. tostring(pErr)) end
+        fn()
     end)
     if not success then
-        warn("[Exiles Loader] Failed to load script: " .. tostring(err))
+        warn("[Exiles Loader] Failed: " .. tostring(err))
+        ShowNotification("Exiles Hub Error", string.sub(tostring(err), 1, 90))
     end
 end

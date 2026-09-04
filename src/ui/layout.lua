@@ -39,7 +39,7 @@ function UILayout.Build(Rayfield, HubState, Helpers, Modules)
     -- 1. EGG STEALING TAB
     -- ================================================================
     Window:CreateSection({ name = "Egg Stealing" })
-    local StealTab = Window:CreateTab({ name = "Auto Steal", icon = 93364949241311 })
+    local StealTab = Window:CreateTab({ name = "Auto Steal" })
 
     StealTab:CreateSection({ name = "Steal Engine" })
 
@@ -137,7 +137,7 @@ function UILayout.Build(Rayfield, HubState, Helpers, Modules)
     -- 2. TREADMILL & BASE UPGRADES TAB
     -- ================================================================
     Window:CreateSection({ name = "Treadmill & Base" })
-    local TreadmillTab = Window:CreateTab({ name = "Treadmill & Base", icon = 93364949241311 })
+    local TreadmillTab = Window:CreateTab({ name = "Treadmill & Base" })
 
     TreadmillTab:CreateSection({ name = "Speed Farming" })
 
@@ -201,7 +201,7 @@ function UILayout.Build(Rayfield, HubState, Helpers, Modules)
     -- 3. HUNGRY MONSTER TAB
     -- ================================================================
     Window:CreateSection({ name = "Monster" })
-    local MonsterTab = Window:CreateTab({ name = "Hungry Monster", icon = 93364949241311 })
+    local MonsterTab = Window:CreateTab({ name = "Hungry Monster" })
 
     MonsterTab:CreateSection({ name = "Monster Feeding" })
 
@@ -231,7 +231,7 @@ function UILayout.Build(Rayfield, HubState, Helpers, Modules)
     -- 4. HATCH & PREDICTOR TAB
     -- ================================================================
     Window:CreateSection({ name = "Pets & Eggs" })
-    local HatchTab = Window:CreateTab({ name = "Hatch & Predictor", icon = 93364949241311 })
+    local HatchTab = Window:CreateTab({ name = "Hatch & Predictor" })
 
     HatchTab:CreateSection({ name = "Egg Opener" })
 
@@ -284,7 +284,7 @@ function UILayout.Build(Rayfield, HubState, Helpers, Modules)
     -- ================================================================
     -- 5. PET MANAGEMENT TAB
     -- ================================================================
-    local PetTab = Window:CreateTab({ name = "Pet Management", icon = 93364949241311 })
+    local PetTab = Window:CreateTab({ name = "Pet Management" })
 
     PetTab:CreateSection({ name = "Equip & Favorites" })
 
@@ -397,7 +397,7 @@ function UILayout.Build(Rayfield, HubState, Helpers, Modules)
     -- ================================================================
     -- 6. EGG ECONOMY TAB
     -- ================================================================
-    local EggSellTab = Window:CreateTab({ name = "Egg Economy", icon = 93364949241311 })
+    local EggSellTab = Window:CreateTab({ name = "Egg Economy" })
 
     EggSellTab:CreateSection({ name = "Egg Selling" })
 
@@ -428,7 +428,7 @@ function UILayout.Build(Rayfield, HubState, Helpers, Modules)
     -- 7. VISUALS (ESP) TAB
     -- ================================================================
     Window:CreateSection({ name = "Player & Visuals" })
-    local VisualsTab = Window:CreateTab({ name = "Visuals (ESP)", icon = 93364949241311 })
+    local VisualsTab = Window:CreateTab({ name = "Visuals (ESP)" })
 
     VisualsTab:CreateSection({ name = "ESP Chams" })
 
@@ -451,7 +451,7 @@ function UILayout.Build(Rayfield, HubState, Helpers, Modules)
     -- ================================================================
     -- 8. LOCAL PLAYER TAB
     -- ================================================================
-    local PlayerTab = Window:CreateTab({ name = "Local Player", icon = 93364949241311 })
+    local PlayerTab = Window:CreateTab({ name = "Local Player" })
 
     PlayerTab:CreateSection({ name = "Speed & Movement" })
 
@@ -513,7 +513,7 @@ function UILayout.Build(Rayfield, HubState, Helpers, Modules)
     -- 9. SETTINGS TAB
     -- ================================================================
     Window:CreateSection({ name = "System" })
-    local SettingsTab = Window:CreateTab({ name = "Settings", icon = 93364949241311 })
+    local SettingsTab = Window:CreateTab({ name = "Settings" })
 
     SettingsTab:CreateSection({ name = "Theme & Keybind" })
 
