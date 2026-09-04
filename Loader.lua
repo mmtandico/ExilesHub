@@ -1,7 +1,7 @@
 --[[
     ╔═══════════════════════════════════════════════════════════╗
     ║          EXILES HUB  ·  UNIVERSAL LOADER                  ║
-    ║          DEV: ZAX   ·  Powered by Rayfield Gen 2          ║
+    ║          DEV: ZAX   ·  Powered by WindUI (Footagesus)     ║
     ║          Repository: github.com/mmtandico/ExilesHub        ║
     ╚═══════════════════════════════════════════════════════════╝
 ]]

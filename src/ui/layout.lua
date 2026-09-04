@@ -24,32 +24,287 @@ end
 -- ─────────────────────────────────────────────────────────────────────────
 function UILayout.Build(WindUI, HubState, Helpers, Modules)
 
-    -- ── Window ────────────────────────────────────────────────────────────
+    local Players     = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+
+    -- ── Window (Hidden/Fisch Aesthetic) ──────────────────────────────────
     local Window = WindUI:CreateWindow({
-        Title        = "EXILES HUB",
+        Title        = "Exiles - Steal An Egg",
         Author       = "DEV ZAX",
-        Icon         = "solar:sword-bold-duotone",
+        Icon         = "solar:moon-bold-duotone",
         Folder       = "ExilesHub",
         Theme        = "Midnight",
         ToggleKey    = Enum.KeyCode.RightControl,
         NewElements  = true,
         HideSearchBar = false,
+        User = {
+            Enabled   = true,
+            Anonymous = false,
+            Callback  = function()
+                pcall(function()
+                    setclipboard("https://www.roblox.com/users/" .. tostring(LocalPlayer.UserId) .. "/profile")
+                    Notify(WindUI, "Profile Copied", "Your Roblox profile link was copied!", "solar:copy-bold", 3)
+                end)
+            end,
+        },
         Topbar       = {
-            Height      = 48,
+            Height      = 46,
             ButtonsType = "Mac",
         },
     })
 
-    -- ── Tag ───────────────────────────────────────────────────────────────
+    -- ── Tags (Discord & Dev Branding) ─────────────────────────────────────
+    Window:Tag({
+        Title  = ".gg/exileshub",
+        Icon   = "solar:chat-round-bold",
+        Color  = Color3.fromHex("#5865f2"),
+        Border = true,
+    })
+
     Window:Tag({
         Title  = "DEV ZAX  ·  v3.2",
         Icon   = "solar:star-bold",
-        Color  = Color3.fromHex("#1a3a6b"),
+        Color  = Color3.fromHex("#1e293b"),
         Border = true,
     })
 
     -- ── Boot notification ─────────────────────────────────────────────────
-    Notify(WindUI, "⚡ Exiles Hub Loaded", "Welcome — DEV ZAX Edition", "solar:home-2-bold", 4)
+    Notify(WindUI, "⚡ Exiles Hub Loaded", "Welcome " .. (LocalPlayer and LocalPlayer.DisplayName or "") .. " — DEV ZAX", "solar:home-2-bold", 4)
+
+    -- ════════════════════════════════════════════════════════════════════
+    -- 0.  HOME / DASHBOARD (Exact Replica of Reference Design)
+    -- ════════════════════════════════════════════════════════════════════
+    local HomeTab = Window:Tab({
+        Title     = "Home",
+        Icon      = "solar:home-2-bold",
+        IconColor = Color3.fromHex("#38bdf8"),
+        IconShape = "Square",
+        Border    = true,
+    })
+
+    -- ── Top Profile Card ──────────────────────────────────────────────────
+    HomeTab:Section({ Title = "Dashboard" })
+
+    local headshot = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId) .. "&w=150&h=150"
+    HomeTab:Button({
+        Title    = "Hello, " .. (LocalPlayer.DisplayName or LocalPlayer.Name),
+        Desc     = LocalPlayer.Name .. " - Exiles · Steal An Egg",
+        Icon     = headshot,
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            pcall(function()
+                setclipboard("https://www.roblox.com/users/" .. tostring(LocalPlayer.UserId) .. "/profile")
+                Notify(WindUI, "Copied Profile", "Profile URL copied to clipboard!", "solar:copy-bold", 3)
+            end)
+        end,
+    })
+
+    -- ── Status & Discord Row ──────────────────────────────────────────────
+    local statusGroup = HomeTab:Group()
+
+    local execName = "Universal"
+    pcall(function()
+        if typeof(identifyexecutor) == "function" then
+            execName = tostring(identifyexecutor())
+        elseif typeof(getexecutorname) == "function" then
+            execName = tostring(getexecutorname())
+        end
+    end)
+
+    statusGroup:Button({
+        Title    = execName,
+        Desc     = "Your executor seems to support this script.",
+        Icon     = "solar:shield-check-bold",
+        Color    = Color3.fromHex("#450a0a"),
+        Callback = function()
+            Notify(WindUI, "Executor: " .. execName, "Fully compatible with Exiles Hub.", "solar:shield-check-bold", 3)
+        end,
+    })
+
+    statusGroup:Space()
+
+    statusGroup:Button({
+        Title    = "Discord",
+        Desc     = "Tap to join the Discord Server",
+        Icon     = "solar:chat-round-bold",
+        Color    = Color3.fromHex("#5865f2"),
+        Callback = function()
+            pcall(function()
+                setclipboard("https://discord.gg/exileshub")
+                Notify(WindUI, "Discord Copied", "Invite link copied to clipboard! (.gg/exileshub)", "solar:chat-round-bold", 4)
+            end)
+        end,
+    })
+
+    -- ── Server Information Grid ───────────────────────────────────────────
+    HomeTab:Section({ Title = "Server" })
+
+    local srvRow1 = HomeTab:Group()
+    local PlayersBtn = srvRow1:Button({
+        Title    = "Players",
+        Desc     = tostring(#Players:GetPlayers()) .. " playing",
+        Icon     = "solar:users-group-rounded-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function() end,
+    })
+    srvRow1:Space()
+    local MaxPlayersBtn = srvRow1:Button({
+        Title    = "Maximum Players",
+        Desc     = tostring(Players.MaxPlayers) .. " players can join this server",
+        Icon     = "solar:shield-user-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function() end,
+    })
+
+    local srvRow2 = HomeTab:Group()
+    local LatencyBtn = srvRow2:Button({
+        Title    = "Latency",
+        Desc     = "Calculating...",
+        Icon     = "solar:wifi-router-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function() end,
+    })
+    srvRow2:Space()
+    local RegionBtn = srvRow2:Button({
+        Title    = "Server Region",
+        Desc     = (game.JobId ~= "" and string.sub(game.JobId, 1, 8) or "Standard") .. " (Place: " .. tostring(game.PlaceId) .. ")",
+        Icon     = "solar:map-point-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            pcall(function()
+                setclipboard(tostring(game.JobId))
+                Notify(WindUI, "Job ID Copied", "Server JobId copied to clipboard!", "solar:copy-bold", 3)
+            end)
+        end,
+    })
+
+    local srvRow3 = HomeTab:Group()
+    local TimeBtn = srvRow3:Button({
+        Title    = "In server for",
+        Desc     = "00:00:00",
+        Icon     = "solar:clock-circle-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function() end,
+    })
+    srvRow3:Space()
+    local JoinScriptBtn = srvRow3:Button({
+        Title    = "Join Script",
+        Desc     = "Tap to copy join script",
+        Icon     = "solar:copy-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            pcall(function()
+                local teleportScript = string.format(
+                    'game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s", game:GetService("Players").LocalPlayer)',
+                    game.PlaceId,
+                    game.JobId
+                )
+                setclipboard(teleportScript)
+                Notify(WindUI, "Copied Join Script", "Teleport script copied to clipboard!", "solar:code-bold", 4)
+            end)
+        end,
+    })
+
+    -- ── Friends Grid ──────────────────────────────────────────────────────
+    HomeTab:Section({ Title = "Friends" })
+
+    local frndRow1 = HomeTab:Group()
+    local InServerFriendsBtn = frndRow1:Button({
+        Title    = "In Server",
+        Desc     = "no friends",
+        Icon     = "solar:user-check-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function() end,
+    })
+    frndRow1:Space()
+    local OfflineFriendsBtn = frndRow1:Button({
+        Title    = "Offline",
+        Desc     = "Scanning...",
+        Icon     = "solar:user-cross-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function() end,
+    })
+
+    local frndRow2 = HomeTab:Group()
+    local OnlineFriendsBtn = frndRow2:Button({
+        Title    = "Online",
+        Desc     = "Scanning...",
+        Icon     = "solar:user-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function() end,
+    })
+    frndRow2:Space()
+    local AllFriendsBtn = frndRow2:Button({
+        Title    = "All",
+        Desc     = "Loading...",
+        Icon     = "solar:users-group-two-rounded-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function() end,
+    })
+
+    -- ── Live Dashboard Statistics Updater ─────────────────────────────────
+    local sessionStart = os.time()
+    task.spawn(function()
+        -- Query friends list asynchronously
+        task.spawn(function()
+            pcall(function()
+                local onlineFriends = LocalPlayer:GetFriendsOnline(100)
+                if typeof(onlineFriends) == "table" then
+                    local onlineCount = #onlineFriends
+                    local inServerCount = 0
+                    for _, f in ipairs(onlineFriends) do
+                        if f.GameId == game.JobId then
+                            inServerCount = inServerCount + 1
+                        end
+                    end
+                    pcall(function()
+                        InServerFriendsBtn:SetDesc(inServerCount > 0 and (tostring(inServerCount) .. " friends") or "no friends")
+                        OnlineFriendsBtn:SetDesc(tostring(onlineCount) .. " friends")
+                    end)
+                end
+            end)
+
+            pcall(function()
+                local pages = Players:GetFriendsAsync(LocalPlayer.UserId)
+                local total = 0
+                while true do
+                    local pageItems = pages:GetCurrentPage()
+                    total = total + #pageItems
+                    if pages.IsFinished or total >= 200 then break end
+                    pages:AdvanceToNextPageAsync()
+                end
+                pcall(function()
+                    AllFriendsBtn:SetDesc(tostring(total) .. " Friends")
+                    local online = 0
+                    pcall(function()
+                        local txt = OnlineFriendsBtn.Desc or ""
+                        online = tonumber(txt:match("(%d+)")) or 0
+                    end)
+                    OfflineFriendsBtn:SetDesc(tostring(math.max(0, total - online)) .. " friends")
+                end)
+            end)
+        end)
+
+        -- 1-second dynamic heartbeat ticker
+        while task.wait(1) do
+            local elapsed = os.time() - sessionStart
+            local h = math.floor(elapsed / 3600)
+            local m = math.floor((elapsed % 3600) / 60)
+            local s = elapsed % 60
+            local timeStr = string.format("%02d:%02d:%02d", h, m, s)
+
+            local ping = 60
+            pcall(function()
+                ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+            end)
+
+            pcall(function()
+                TimeBtn:SetDesc(timeStr)
+                LatencyBtn:SetDesc(tostring(ping) .. "ms")
+                PlayersBtn:SetDesc(tostring(#Players:GetPlayers()) .. " playing")
+            end)
+        end
+    end)
 
     -- ════════════════════════════════════════════════════════════════════
     -- 1.  EGG STEALING
