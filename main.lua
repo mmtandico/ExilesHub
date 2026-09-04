@@ -15,6 +15,29 @@ if game.PlaceId ~= TARGET_PLACE_ID and game.GameId ~= TARGET_PLACE_ID then
         .. " (Target: " .. tostring(TARGET_PLACE_ID) .. ")")
 end
 
+-- ── Clean up Any Previous UI Instances (Redz, Visual, etc.) ───────────────
+pcall(function()
+    local CoreGui = game:GetService("CoreGui")
+    local Players = game:GetService("Players")
+    local PlayerGui = Players.LocalPlayer and Players.LocalPlayer:FindFirstChild("PlayerGui")
+    local targets = {
+        "redz Library V5",
+        "redz library V5",
+        "Visual UI Library | .gg/puxxCphTnK",
+        "Visual UI Library | .gg/puxxCphTnK | Notifications"
+    }
+    for _, name in ipairs(targets) do
+        if CoreGui then
+            local g = CoreGui:FindFirstChild(name)
+            if g then g:Destroy() end
+        end
+        if PlayerGui then
+            local g = PlayerGui:FindFirstChild(name)
+            if g then g:Destroy() end
+        end
+    end
+end)
+
 -- ── Visual UI Library Loader (Multi-Source Robust Loader) ──────────────────
 local VISUAL_URLS = {
     "https://raw.githubusercontent.com/VisualRoblox/Roblox/main/UI-Libraries/Visual%20UI%20Library/Source.lua",

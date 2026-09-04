@@ -10,6 +10,28 @@ local Players     = game:GetService("Players")
 local RunService  = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
+-- ── Purge Any Previous UIs (Redz, Visual, etc.) ──────────────────────────
+pcall(function()
+    local CoreGui = game:GetService("CoreGui")
+    local PlayerGui = LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui")
+    local targets = {
+        "redz Library V5",
+        "redz library V5",
+        "Visual UI Library | .gg/puxxCphTnK",
+        "Visual UI Library | .gg/puxxCphTnK | Notifications"
+    }
+    for _, name in ipairs(targets) do
+        if CoreGui then
+            local g = CoreGui:FindFirstChild(name)
+            if g then g:Destroy() end
+        end
+        if PlayerGui then
+            local g = PlayerGui:FindFirstChild(name)
+            if g then g:Destroy() end
+        end
+    end
+end)
+
 -- ── Config ─────────────────────────────────────────────────────────────
 local GITHUB_RAW_BASE = "https://raw.githubusercontent.com/mmtandico/ExilesHub/refs/heads/main/"
 local VERSION         = "v3.5"
