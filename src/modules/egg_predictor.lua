@@ -585,11 +585,24 @@ function EggPredictor.StealTargetEgg(eggData, Helpers, HubState)
         task.wait(0.3)
 
         if HubState.Settings.AutoPlaceEgg then
-            local spawn = Workspace:FindFirstChildOfClass("SpawnLocation")
-            if spawn then
-                Helpers.TweenTo(spawn.CFrame + Vector3.new(0, 3, 0), HubState.Settings.TweenSpeed or 35)
-                Helpers.FireRemoteByKeywords({"place", "deposit", "bank", "deliver"})
+            local depositCFrame = Helpers.GetBaseDepositCFrame()
+            Helpers.TweenTo(depositCFrame, HubState.Settings.TweenSpeed or 35)
+            task.wait(0.2)
+
+            local base = Helpers.GetPlayerBase()
+            if base then
+                for _, prompt in ipairs(base:GetDescendants()) do
+                    if prompt:IsA("ProximityPrompt") and prompt.Enabled then
+                        local pText = (prompt.ActionText .. " " .. prompt.ObjectText):lower()
+                        if pText:find("place") or pText:find("deposit") or pText:find("drop") or pText:find("egg") then
+                            Helpers.SafeFirePrompt(prompt)
+                            break
+                        end
+                    end
+                end
             end
+
+            Helpers.FireRemoteByKeywords({"place", "deposit", "bank", "deliver", "dropegg", "nest"})
         end
     end)
     return true

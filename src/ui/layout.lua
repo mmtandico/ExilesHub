@@ -1256,6 +1256,17 @@ function UILayout.Build(WindUI, HubState, Helpers, Modules)
 
     PlayerTab:Section({ Title = "Abilities" })
 
+    PlayerTab:Slider({
+        Title    = "JumpPower",
+        Flag     = "PlayerJumpPower",
+        Step     = 5,
+        Value    = { Min = 50, Max = 350, Default = 50 },
+        Callback = function(val)
+            HubState.Settings.JumpPower = val
+            Modules.Player.SetJumpPower(val, Helpers)
+        end,
+    })
+
     PlayerTab:Toggle({
         Title    = "Infinite Jump",
         Desc     = "Jump unlimited times in the air.",

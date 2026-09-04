@@ -91,6 +91,7 @@ Modules.Pets.Init(HubState, Helpers)
 Modules.Predictor.Init(HubState, Helpers)
 Modules.EggSell.Init(HubState, Helpers)
 Modules.Player.Init(HubState, Helpers)
+Modules.Visuals.Init(HubState, Helpers)
 
 -- ── Build & Render UI ─────────────────────────────────────────────────────
 local UILayout = Require("ui/layout.lua")

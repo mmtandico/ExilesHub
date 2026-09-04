@@ -21,23 +21,30 @@ function PlayerModule.Init(HubState, Helpers)
         end
     end))
 
-    -- Noclip & WalkSpeed maintenance
+    -- Noclip, WalkSpeed & JumpPower loop
     HubState.AddConnection(RunService.Stepped:Connect(function()
         if not HubState.Running then return end
-        if HubState.Settings.Noclip then
-            local char = LocalPlayer.Character
-            if char then
-                for _, part in ipairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") and part.CanCollide then
-                        part.CanCollide = false
-                    end
+
+        local char = LocalPlayer.Character
+        if HubState.Settings.Noclip and char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then
+                    part.CanCollide = false
                 end
             end
         end
 
         local hum = Helpers.GetHumanoid()
-        if hum and HubState.Settings.WalkSpeed ~= 16 and hum.WalkSpeed ~= HubState.Settings.WalkSpeed then
-            hum.WalkSpeed = HubState.Settings.WalkSpeed
+        if hum then
+            if HubState.Settings.WalkSpeed and hum.WalkSpeed ~= HubState.Settings.WalkSpeed then
+                hum.WalkSpeed = HubState.Settings.WalkSpeed
+            end
+            if HubState.Settings.JumpPower and HubState.Settings.JumpPower ~= 50 then
+                hum.UseJumpPower = true
+                if hum.JumpPower ~= HubState.Settings.JumpPower then
+                    hum.JumpPower = HubState.Settings.JumpPower
+                end
+            end
         end
     end))
 
@@ -58,6 +65,14 @@ end
 function PlayerModule.SetWalkSpeed(speed, Helpers)
     local hum = Helpers.GetHumanoid()
     if hum then hum.WalkSpeed = speed end
+end
+
+function PlayerModule.SetJumpPower(power, Helpers)
+    local hum = Helpers.GetHumanoid()
+    if hum then
+        hum.UseJumpPower = true
+        hum.JumpPower = power
+    end
 end
 
 return PlayerModule
