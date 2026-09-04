@@ -1,9 +1,9 @@
 --[[
     ╔═══════════════════════════════════════════════════════════╗
-    ║      EXILES SCRIPT HUB  ·  REDZ UI REDESIGN               ║
-    ║      Library : RedzLib (RedzHub UI)                       ║
-    ║      Theme   : Darker / Obsidian Custom                   ║
-    ║      Author  : DEV ZAX                                     ║
+    ║     EXILES SCRIPT HUB  ·  VISUAL UI REDESIGN              ║
+    ║     Library : Visual UI Library                           ║
+    ║     Theme   : Nordic Dark / Dynamic Themes                ║
+    ║     Author  : DEV ZAX                                     ║
     ╚═══════════════════════════════════════════════════════════╝
 ]]
 
@@ -16,239 +16,231 @@ local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
 -- ── Toast Notification Helper ─────────────────────────────────────────────
-local function Notify(title, content, duration)
+local function Notify(Library, title, content, duration)
     pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = title or "Exiles Hub",
-            Text = content or "",
-            Duration = duration or 3,
-        })
+        if Library and type(Library.CreateNotification) == "function" then
+            Library:CreateNotification(title or "Exiles Hub", content or "", duration or 3)
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = title or "Exiles Hub",
+                Text = content or "",
+                Duration = duration or 3,
+            })
+        end
     end)
 end
 
-function UILayout.Build(redzlib, HubState, Helpers, Modules)
-    -- ── Create Window ─────────────────────────────────────────────────────
-    local Window = redzlib:MakeWindow({
-        Title = "Exiles Hub · Steal An Egg",
-        SubTitle = "DEV ZAX",
-        SaveFolder = "ExilesHub_StealAnEgg"
-    })
+-- ── Safe Element Wrappers for Dynamic Updates ─────────────────────────────
+local function SafeCreateParagraph(section, title, text)
+    local paraObj = section:CreateParagraph(title, text)
+    return {
+        Set = function(self, newTitle, newText)
+            if not newText then
+                newText = newTitle
+                newTitle = title
+            end
+            if paraObj and type(paraObj.UpdateParagraph) == "function" then
+                pcall(function()
+                    paraObj:UpdateParagraph(newTitle, newText)
+                end)
+            end
+        end,
+        UpdateParagraph = function(self, newTitle, newText)
+            if paraObj and type(paraObj.UpdateParagraph) == "function" then
+                pcall(function()
+                    paraObj:UpdateParagraph(newTitle, newText)
+                end)
+            end
+        end
+    }
+end
 
-    -- ── Add Minimize Floating Button ──────────────────────────────────────
-    pcall(function()
-        Window:AddMinimizeButton({
-            Button = {
-                Image = redzlib:GetIcon("egg") or "rbxassetid://10709761530",
-                BackgroundTransparency = 0
-            },
-            Corner = {
-                CornerRadius = UDim.new(35, 1)
-            },
-        })
+local function SafeCreateButton(section, initialName, callback)
+    local currentAction = callback or function() end
+    local holderName = initialName .. "ButtonHolder"
+    local btnName = initialName .. "Button"
+
+    section:CreateButton(initialName, function()
+        pcall(currentAction)
     end)
 
-    Notify("⚡ Exiles Hub", "Redz UI Loaded — Welcome " .. (LocalPlayer.DisplayName or LocalPlayer.Name), 4)
+    return {
+        Set = function(self, newText, newCallback)
+            if newCallback then
+                currentAction = newCallback
+            end
+            pcall(function()
+                local holder = section:FindFirstChild(holderName)
+                if holder then
+                    local btn = holder:FindFirstChild(btnName)
+                    if btn and btn:IsA("TextButton") then
+                        btn.Text = newText
+                    end
+                end
+            end)
+        end
+    }
+end
+
+function UILayout.Build(Library, HubState, Helpers, Modules)
+    -- ── Create Visual UI Window ───────────────────────────────────────────
+    local Window = Library:CreateWindow(
+        "Exiles Hub",                    -- HubName
+        "Steal An Egg",                  -- GameName
+        "Exiles Hub | DEV ZAX",          -- IntroText
+        "rbxassetid://10709761530",      -- IntroIcon
+        false,                           -- ImprovePerformance
+        "ExilesHub_StealAnEgg",          -- ConfigFolder
+        "Nordic Dark"                    -- Theme
+    )
+
+    Notify(Library, "⚡ Exiles Hub", "Visual UI Loaded — Welcome " .. (LocalPlayer.DisplayName or LocalPlayer.Name), 4)
 
     -- ════════════════════════════════════════════════════════════════════
     -- 1.  HOME & DASHBOARD TAB
     -- ════════════════════════════════════════════════════════════════════
-    local HomeTab = Window:MakeTab({
-        Name = "Home",
-        Icon = "home"
-    })
+    local HomeTab = Window:CreateTab("Home", true, "rbxassetid://10709761530")
 
-    HomeTab:AddSection("Welcome to Exiles Hub")
+    local HomeStatusSec = HomeTab:CreateSection("Welcome & Status")
 
-    HomeTab:AddParagraph({
+    HomeStatusSec:CreateParagraph(
         "DEV ZAX  ·  Exiles Hub v3.5",
-        "Hello " .. (LocalPlayer.DisplayName or LocalPlayer.Name) .. " (@" .. LocalPlayer.Name .. ")\nGame: Steal An Egg (ID: 107778070777162)\nStatus: Operational & Undetected"
-    })
+        "Hello " .. (LocalPlayer.DisplayName or LocalPlayer.Name) .. " (@" .. LocalPlayer.Name .. ")\nGame: Steal An Egg (ID: 107778070777162)\nStatus: Operational & Undetected\nUI Engine: Visual UI Library"
+    )
 
-    HomeTab:AddDiscordInvite({
-        Name = "Exiles Hub Community",
-        Description = "Join our Discord for updates, free scripts & community support!",
-        Logo = "rbxassetid://10709761530",
-        Invite = "https://discord.gg/exileshub"
-    })
+    HomeStatusSec:CreateParagraph(
+        "Exiles Hub Community",
+        "Join our Discord for updates, free scripts & community support!\nOfficial Invite: discord.gg/exileshub"
+    )
 
-    HomeTab:AddSection("Quick Actions")
+    local HomeActionsSec = HomeTab:CreateSection("Quick Actions")
 
-    HomeTab:AddButton({
-        Name = "Copy Discord Link (.gg/exileshub)",
-        Callback = function()
-            pcall(function()
-                setclipboard("https://discord.gg/exileshub")
-                Notify("Discord Copied", "discord.gg/exileshub copied to clipboard!", 3)
-            end)
-        end
-    })
+    HomeActionsSec:CreateButton("Copy Discord Link (.gg/exileshub)", function()
+        pcall(function()
+            setclipboard("https://discord.gg/exileshub")
+            Notify(Library, "Discord Copied", "discord.gg/exileshub copied to clipboard!", 3)
+        end)
+    end)
 
-    HomeTab:AddButton({
-        Name = "Copy Profile Link",
-        Callback = function()
-            pcall(function()
-                setclipboard("https://www.roblox.com/users/" .. tostring(LocalPlayer.UserId) .. "/profile")
-                Notify("Profile Copied", "Profile link copied to clipboard!", 3)
-            end)
-        end
-    })
+    HomeActionsSec:CreateButton("Copy Profile Link", function()
+        pcall(function()
+            setclipboard("https://www.roblox.com/users/" .. tostring(LocalPlayer.UserId) .. "/profile")
+            Notify(Library, "Profile Copied", "Profile link copied to clipboard!", 3)
+        end)
+    end)
 
-    HomeTab:AddButton({
-        Name = "Rejoin Current Server",
-        Callback = function()
-            Notify("Rejoining", "Connecting back to server...", 2)
-            task.wait(0.5)
-            TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-        end
-    })
+    HomeActionsSec:CreateButton("Rejoin Current Server", function()
+        Notify(Library, "Rejoining", "Connecting back to server...", 2)
+        task.wait(0.5)
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end)
 
-    HomeTab:AddButton({
-        Name = "Server Hop (Smallest)",
-        Callback = function()
-            pcall(function()
-                local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
-                local res = game:HttpGet(url)
-                local data = HttpService:JSONDecode(res)
-                if data and data.data then
-                    for _, s in ipairs(data.data) do
-                        if s.playing and s.playing < s.maxPlayers and s.id ~= game.JobId then
-                            Notify("Server Hopping", "Connecting to new server...", 2)
-                            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer)
-                            return
-                        end
+    HomeActionsSec:CreateButton("Server Hop (Smallest)", function()
+        pcall(function()
+            local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+            local res = game:HttpGet(url)
+            local data = HttpService:JSONDecode(res)
+            if data and data.data then
+                for _, s in ipairs(data.data) do
+                    if s.playing and s.playing < s.maxPlayers and s.id ~= game.JobId then
+                        Notify(Library, "Server Hopping", "Connecting to new server...", 2)
+                        TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer)
+                        return
                     end
                 end
-                Notify("Server Hop", "No alternative server found.", 3)
-            end)
-        end
-    })
+            end
+            Notify(Library, "Server Hop", "No alternative server found.", 3)
+        end)
+    end)
 
     -- ════════════════════════════════════════════════════════════════════
     -- 2.  EGG PREDICTOR & SERVER TRACKER TAB
     -- ════════════════════════════════════════════════════════════════════
-    local PredictorTab = Window:MakeTab({
-        Name = "Egg Predictor",
-        Icon = "activity"
-    })
+    local PredictorTab = Window:CreateTab("Egg Predictor", false, "rbxassetid://10709761530")
 
-    PredictorTab:AddSection("Live Game & Night Cycle Forecast")
+    local PredictorForecastSec = PredictorTab:CreateSection("Live Game & Night Cycle Forecast")
 
-    local PredictorStatus = PredictorTab:AddParagraph({
+    local PredictorStatus = SafeCreateParagraph(
+        PredictorForecastSec,
         "Cycle Forecast",
         "Spawn Cycle: 05:00\nIn-Game Clock: " .. string.format("%.2f", Lighting.ClockTime) .. ":00\nNight Cycle: Calculating..."
-    })
+    )
 
-    local PredictorStats = PredictorTab:AddParagraph({
-        "Detected Eggs",
-        "Divine: 0  |  Eternal: 0  |  Secret: 0  |  Total: 0"
-    })
+    local PredictorStats = SafeCreateParagraph(
+        PredictorForecastSec,
+        "Detected Eggs Across Server",
+        "Divine: 0  |  Eternal: 0  |  Secret: 0  |  Cosmic: 0"
+    )
 
-    PredictorTab:AddSection("Timer Sync & Calibration")
+    local PredictorSyncSec = PredictorTab:CreateSection("Timer Sync & Calibration")
 
-    PredictorTab:AddButton({
-        Name = "🌙 Sync With In-Game Night Cycle",
-        Callback = function()
-            if Modules.Predictor and Modules.Predictor.SyncWithLighting then
-                local s, rem = Modules.Predictor.SyncWithLighting()
-                if s then
-                    Notify("🌙 Night Synced", "Forecast calibrated: " .. string.format("%02d:%02d", math.floor(rem/60), rem%60), 3)
-                else
-                    Notify("Timer", "Sync completed.", 2)
-                end
+    PredictorSyncSec:CreateButton("🌙 Sync With In-Game Night Cycle", function()
+        if Modules.Predictor and Modules.Predictor.SyncWithLighting then
+            local s, rem = Modules.Predictor.SyncWithLighting()
+            if s then
+                Notify(Library, "🌙 Night Synced", "Forecast calibrated: " .. string.format("%02d:%02d", math.floor(rem/60), rem%60), 3)
+            else
+                Notify(Library, "Timer", "Sync completed.", 2)
             end
         end
-    })
+    end)
 
-    PredictorTab:AddButton({
-        Name = "🔄 Reset Spawn Timer (05:00)",
-        Callback = function()
-            if Modules.Predictor and Modules.Predictor.SyncTimer then
-                Modules.Predictor.SyncTimer(300)
-                Notify("Timer Reset", "Spawn cycle reset to 05:00", 2)
-            end
+    PredictorSyncSec:CreateButton("🔄 Reset Spawn Timer (05:00)", function()
+        if Modules.Predictor and Modules.Predictor.SyncTimer then
+            Modules.Predictor.SyncTimer(300)
+            Notify(Library, "Timer Reset", "Spawn cycle reset to 05:00", 2)
         end
-    })
+    end)
 
-    PredictorTab:AddButton({
-        Name = "⏩ +10s Fine Tune Offset",
-        Callback = function()
-            if Modules.Predictor and Modules.Predictor.AdjustManualOffset then
-                Modules.Predictor.AdjustManualOffset(10)
-                Notify("Timer Calibrated", "+10s applied to forecast", 2)
-            end
+    PredictorSyncSec:CreateButton("⏩ +10s Fine Tune Offset", function()
+        if Modules.Predictor and Modules.Predictor.AdjustManualOffset then
+            Modules.Predictor.AdjustManualOffset(10)
+            Notify(Library, "Timer Calibrated", "+10s applied to forecast", 2)
         end
-    })
+    end)
 
-    PredictorTab:AddButton({
-        Name = "⏪ -10s Fine Tune Offset",
-        Callback = function()
-            if Modules.Predictor and Modules.Predictor.AdjustManualOffset then
-                Modules.Predictor.AdjustManualOffset(-10)
-                Notify("Timer Calibrated", "-10s applied to forecast", 2)
-            end
+    PredictorSyncSec:CreateButton("⏪ -10s Fine Tune Offset", function()
+        if Modules.Predictor and Modules.Predictor.AdjustManualOffset then
+            Modules.Predictor.AdjustManualOffset(-10)
+            Notify(Library, "Timer Calibrated", "-10s applied to forecast", 2)
         end
-    })
+    end)
 
-    PredictorTab:AddSection("Detection & Auto-Steal Controls")
+    local PredictorCtrlSec = PredictorTab:CreateSection("Detection & Auto-Steal Controls")
 
-    PredictorTab:AddToggle({
-        Name = "Predictor & Tracker Enabled",
-        Default = true,
-        Callback = function(v)
-            HubState.Settings.PredictorEnabled = v
-            Notify("Predictor", v and "Detection Engine ON" or "Detection Engine OFF", 2)
+    PredictorCtrlSec:CreateToggle("Predictor & Tracker Enabled", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.PredictorEnabled = v
+        Notify(Library, "Predictor", v and "Detection Engine ON" or "Detection Engine OFF", 2)
+    end)
+
+    PredictorCtrlSec:CreateToggle("Auto-Steal On Detect", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoStealPredicted = v
+        Notify(Library, "Auto-Steal Target", v and "Will claim rare eggs on spawn" or "Disabled", 2)
+    end)
+
+    PredictorCtrlSec:CreateToggle("Predictor ESP Beacons", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.PredictorESP = v
+        if Modules.Predictor and Modules.Predictor.UpdateESP then
+            Modules.Predictor.UpdateESP(v)
         end
-    })
+    end)
 
-    PredictorTab:AddToggle({
-        Name = "Auto-Steal On Detect",
-        Default = false,
-        Callback = function(v)
-            HubState.Settings.AutoStealPredicted = v
-            Notify("Auto-Steal Target", v and "Will claim rare eggs on spawn" or "Disabled", 2)
-        end
-    })
+    PredictorCtrlSec:CreateToggle("Notify Divine (Tier 10)", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.NotifyDivine = v
+    end)
 
-    PredictorTab:AddToggle({
-        Name = "Predictor ESP Beacons",
-        Default = true,
-        Callback = function(v)
-            HubState.Settings.PredictorESP = v
-            if Modules.Predictor and Modules.Predictor.UpdateESP then
-                Modules.Predictor.UpdateESP(v)
-            end
-        end
-    })
+    PredictorCtrlSec:CreateToggle("Notify Eternal (Tier 9)", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.NotifyEternal = v
+    end)
 
-    PredictorTab:AddToggle({
-        Name = "Notify Divine (Tier 10)",
-        Default = true,
-        Callback = function(v) HubState.Settings.NotifyDivine = v end
-    })
+    PredictorCtrlSec:CreateToggle("Notify Secret (Tier 8)", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.NotifySecret = v
+    end)
 
-    PredictorTab:AddToggle({
-        Name = "Notify Eternal (Tier 9)",
-        Default = true,
-        Callback = function(v) HubState.Settings.NotifyEternal = v end
-    })
+    local PredictorSlotsSec = PredictorTab:CreateSection("1-Click Instant Target Steal")
 
-    PredictorTab:AddToggle({
-        Name = "Notify Secret (Tier 8)",
-        Default = true,
-        Callback = function(v) HubState.Settings.NotifySecret = v end
-    })
-
-    PredictorTab:AddSection("1-Click Instant Target Steal")
-
-    local Slot1Btn = PredictorTab:AddButton({
-        Name = "Slot 1: Scanning for high-tier egg...",
-        Callback = function() end
-    })
-
-    local Slot2Btn = PredictorTab:AddButton({
-        Name = "Slot 2: Scanning for high-tier egg...",
-        Callback = function() end
-    })
+    local Slot1Btn = SafeCreateButton(PredictorSlotsSec, "Slot 1: Scanning for high-tier egg...", function() end)
+    local Slot2Btn = SafeCreateButton(PredictorSlotsSec, "Slot 2: Scanning for high-tier egg...", function() end)
 
     -- Background loop to refresh Predictor status and slot buttons
     task.spawn(function()
@@ -283,7 +275,7 @@ function UILayout.Build(redzlib, HubState, Helpers, Modules)
                         Slot1Btn:Set(
                             string.format("⚡ Claim [%s] %s (%s)", e1.Rarity, e1.Name, e1.Area or "Map"),
                             function()
-                                Notify("Target Steal", "Teleporting to " .. e1.Name, 2)
+                                Notify(Library, "Target Steal", "Teleporting to " .. e1.Name, 2)
                                 Modules.Predictor.StealTargetEgg(e1, Helpers, HubState)
                             end
                         )
@@ -296,7 +288,7 @@ function UILayout.Build(redzlib, HubState, Helpers, Modules)
                         Slot2Btn:Set(
                             string.format("⚡ Claim [%s] %s (%s)", e2.Rarity, e2.Name, e2.Area or "Map"),
                             function()
-                                Notify("Target Steal", "Teleporting to " .. e2.Name, 2)
+                                Notify(Library, "Target Steal", "Teleporting to " .. e2.Name, 2)
                                 Modules.Predictor.StealTargetEgg(e2, Helpers, HubState)
                             end
                         )
@@ -312,506 +304,449 @@ function UILayout.Build(redzlib, HubState, Helpers, Modules)
     -- ════════════════════════════════════════════════════════════════════
     -- 3.  AUTO STEAL TAB
     -- ════════════════════════════════════════════════════════════════════
-    local StealTab = Window:MakeTab({
-        Name = "Auto Steal",
-        Icon = "swords"
-    })
+    local StealTab = Window:CreateTab("Auto Steal", false, "rbxassetid://10709761530")
 
-    StealTab:AddSection("Auto Steal Engine")
+    local StealEngineSec = StealTab:CreateSection("Auto Steal Engine")
 
-    StealTab:AddToggle({
-        Name = "Auto Steal Eggs",
-        Default = false,
-        Callback = function(v)
-            HubState.Settings.AutoSteal = v
-            Notify("Auto Steal", v and "✅ Auto Steal Active" or "⛔ Auto Steal Stopped", 2)
-        end
-    })
+    StealEngineSec:CreateToggle("Auto Steal Eggs", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoSteal = v
+        Notify(Library, "Auto Steal", v and "✅ Auto Steal Active" or "⛔ Auto Steal Stopped", 2)
+    end)
 
-    StealTab:AddToggle({
-        Name = "Steal Infested Eggs",
-        Default = true,
-        Callback = function(v) HubState.Settings.StealInfested = v end
-    })
+    StealEngineSec:CreateToggle("Steal Infested Eggs", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.StealInfested = v
+    end)
 
-    StealTab:AddToggle({
-        Name = "Anti-Trap (Bypass Traps)",
-        Default = true,
-        Callback = function(v) HubState.Settings.AntiTrap = v end
-    })
+    StealEngineSec:CreateToggle("Anti-Trap (Bypass Traps)", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AntiTrap = v
+    end)
 
-    StealTab:AddSection("Base Deposit Settings")
+    local StealBaseSec = StealTab:CreateSection("Base Deposit Settings")
 
-    StealTab:AddToggle({
-        Name = "Auto Place Egg On Base Nest",
-        Default = true,
-        Callback = function(v) HubState.Settings.AutoPlaceEgg = v end
-    })
+    StealBaseSec:CreateToggle("Auto Place Egg On Base Nest", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoPlaceEgg = v
+    end)
 
-    StealTab:AddToggle({
-        Name = "Skip Infested Egg Placement",
-        Default = true,
-        Callback = function(v) HubState.Settings.DontPlaceInfested = v end
-    })
+    StealBaseSec:CreateToggle("Skip Infested Egg Placement", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.DontPlaceInfested = v
+    end)
 
-    StealTab:AddSection("Targeting Rules")
+    local StealRulesSec = StealTab:CreateSection("Targeting Rules")
 
-    StealTab:AddDropdown({
-        Name = "Steal Priority",
-        Options = { "Highest Rarity", "Nearest Egg", "Infested First" },
-        Default = "Highest Rarity",
-        Callback = function(v) HubState.Settings.StealPriority = v end
-    })
+    StealRulesSec:CreateDropdown(
+        "Steal Priority",
+        { "Highest Rarity", "Nearest Egg", "Infested First" },
+        "Highest Rarity",
+        0.2,
+        function(v) HubState.Settings.StealPriority = v end
+    )
 
-    StealTab:AddDropdown({
-        Name = "Target Egg Tier",
-        Options = { "All Eggs", "Legendary & Up", "Epic & Up", "Only Infested" },
-        Default = "All Eggs",
-        Callback = function(v) HubState.Settings.TargetSpecificEggs = v end
-    })
+    StealRulesSec:CreateDropdown(
+        "Target Egg Tier",
+        { "All Eggs", "Legendary & Up", "Epic & Up", "Only Infested" },
+        "All Eggs",
+        0.2,
+        function(v) HubState.Settings.TargetSpecificEggs = v end
+    )
 
-    StealTab:AddDropdown({
-        Name = "Target Areas",
-        Options = { "All Areas", "Enemy Bases", "Center Zone", "Rare Spawns" },
-        Default = "All Areas",
-        Callback = function(v) HubState.Settings.TargetAreas = v end
-    })
+    StealRulesSec:CreateDropdown(
+        "Target Areas",
+        { "All Areas", "Enemy Bases", "Center Zone", "Rare Spawns" },
+        "All Areas",
+        0.2,
+        function(v) HubState.Settings.TargetAreas = v end
+    )
 
-    StealTab:AddSection("Speed & Timing")
+    local StealSpeedSec = StealTab:CreateSection("Speed & Timing")
 
-    StealTab:AddSlider({
-        Name = "Tween Speed",
-        Min = 15,
-        Max = 120,
-        Increase = 5,
-        Default = 35,
-        Callback = function(v) HubState.Settings.TweenSpeed = v end
-    })
+    StealSpeedSec:CreateSlider(
+        "Tween Speed",
+        15,
+        120,
+        35,
+        Color3.fromRGB(0, 170, 255),
+        function(v) HubState.Settings.TweenSpeed = v end
+    )
 
-    StealTab:AddSlider({
-        Name = "Steal Timeout (Seconds)",
-        Min = 1,
-        Max = 15,
-        Increase = 1,
-        Default = 5,
-        Callback = function(v) HubState.Settings.StealTimeout = v end
-    })
+    StealSpeedSec:CreateSlider(
+        "Steal Timeout (Seconds)",
+        1,
+        15,
+        5,
+        Color3.fromRGB(0, 170, 255),
+        function(v) HubState.Settings.StealTimeout = v end
+    )
 
     -- ════════════════════════════════════════════════════════════════════
     -- 4.  TREADMILL & BASE TAB
     -- ════════════════════════════════════════════════════════════════════
-    local TreadmillTab = Window:MakeTab({
-        Name = "Treadmill & Base",
-        Icon = "gauge"
-    })
+    local TreadmillTab = Window:CreateTab("Treadmill & Base", false, "rbxassetid://10709761530")
 
-    TreadmillTab:AddSection("Speed Boost Farming")
+    local TreadmillFarmSec = TreadmillTab:CreateSection("Speed Boost Farming")
 
-    TreadmillTab:AddToggle({
-        Name = "Auto Treadmill Farm",
-        Default = false,
-        Callback = function(v)
-            HubState.Settings.AutoTreadmill = v
-            Notify("Treadmill", v and "✅ Auto Treadmill Active" or "⛔ Stopped", 2)
-        end
-    })
+    TreadmillFarmSec:CreateToggle("Auto Treadmill Farm", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoTreadmill = v
+        Notify(Library, "Treadmill", v and "✅ Auto Treadmill Active" or "⛔ Stopped", 2)
+    end)
 
-    TreadmillTab:AddToggle({
-        Name = "Hide Treadmill (Anti-Detection)",
-        Default = false,
-        Callback = function(v)
-            HubState.Settings.HideTreadmill = v
-            Modules.Treadmill.SetHideTreadmill(v)
-        end
-    })
+    TreadmillFarmSec:CreateToggle("Hide Treadmill (Anti-Detection)", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.HideTreadmill = v
+        Modules.Treadmill.SetHideTreadmill(v)
+    end)
 
-    TreadmillTab:AddButton({
-        Name = "Exit Treadmill Now",
-        Callback = function()
-            HubState.Settings.AutoTreadmill = false
-            Modules.Treadmill.Exit(Helpers)
-            Notify("Treadmill", "Exited treadmill safe spot.", 2)
-        end
-    })
+    TreadmillFarmSec:CreateButton("Exit Treadmill Now", function()
+        HubState.Settings.AutoTreadmill = false
+        Modules.Treadmill.Exit(Helpers)
+        Notify(Library, "Treadmill", "Exited treadmill safe spot.", 2)
+    end)
 
-    TreadmillTab:AddSection("Base Upgrades & Rewards")
+    local TreadmillUpgradesSec = TreadmillTab:CreateSection("Base Upgrades & Rewards")
 
-    TreadmillTab:AddToggle({
-        Name = "Auto Upgrade Treadmill",
-        Default = false,
-        Callback = function(v) HubState.Settings.AutoUpgradeTreadmill = v end
-    })
+    TreadmillUpgradesSec:CreateToggle("Auto Upgrade Treadmill", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoUpgradeTreadmill = v
+    end)
 
-    TreadmillTab:AddToggle({
-        Name = "Auto Upgrade Base Nest",
-        Default = false,
-        Callback = function(v) HubState.Settings.AutoUpgradeBase = v end
-    })
+    TreadmillUpgradesSec:CreateToggle("Auto Upgrade Base Nest", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoUpgradeBase = v
+    end)
 
-    TreadmillTab:AddToggle({
-        Name = "Auto Buy Speed Trail",
-        Default = false,
-        Callback = function(v) HubState.Settings.AutoBuyTrail = v end
-    })
+    TreadmillUpgradesSec:CreateToggle("Auto Buy Speed Trail", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoBuyTrail = v
+    end)
 
-    TreadmillTab:AddToggle({
-        Name = "Auto Claim Daily & Free Gifts",
-        Default = false,
-        Callback = function(v) HubState.Settings.AutoClaim = v end
-    })
+    TreadmillUpgradesSec:CreateToggle("Auto Claim Daily & Free Gifts", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoClaim = v
+    end)
 
     -- ════════════════════════════════════════════════════════════════════
     -- 5.  PETS & HATCHING TAB
     -- ════════════════════════════════════════════════════════════════════
-    local PetsTab = Window:MakeTab({
-        Name = "Pets & Hatching",
-        Icon = "star"
-    })
+    local PetsTab = Window:CreateTab("Pets & Hatching", false, "rbxassetid://10709761530")
 
-    PetsTab:AddSection("Egg Opener")
+    local PetsHatchSec = PetsTab:CreateSection("Egg Opener")
 
-    PetsTab:AddDropdown({
-        Name = "Select Egg Type",
-        Options = {
-            "Basic Egg", "Rare Egg", "Epic Egg",
-            "Legendary Egg", "Mythic Egg", "Infested Egg", "Void Egg"
-        },
-        Default = "Basic Egg",
-        Callback = function(v) HubState.Settings.EggScope = v end
-    })
+    PetsHatchSec:CreateDropdown(
+        "Select Egg Type",
+        { "Basic Egg", "Rare Egg", "Epic Egg", "Legendary Egg", "Mythic Egg", "Infested Egg", "Void Egg" },
+        "Basic Egg",
+        0.2,
+        function(v) HubState.Settings.EggScope = v end
+    )
 
-    PetsTab:AddToggle({
-        Name = "Auto Hatch Selected Egg",
-        Default = false,
-        Callback = function(v)
-            HubState.Settings.AutoHatch = v
-            Notify("Auto Hatch", v and ("✅ Hatching " .. HubState.Settings.EggScope) or "⛔ Stopped", 2)
-        end
-    })
+    PetsHatchSec:CreateToggle("Auto Hatch Selected Egg", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoHatch = v
+        Notify(Library, "Auto Hatch", v and ("✅ Hatching " .. HubState.Settings.EggScope) or "⛔ Stopped", 2)
+    end)
 
-    PetsTab:AddSection("Pet Management")
+    local PetsMgmtSec = PetsTab:CreateSection("Pet Management")
 
-    PetsTab:AddToggle({
-        Name = "Auto Equip Best Pets",
-        Default = false,
-        Callback = function(v) HubState.Settings.AutoEquipBest = v end
-    })
+    PetsMgmtSec:CreateToggle("Auto Equip Best Pets", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoEquipBest = v
+    end)
 
-    PetsTab:AddToggle({
-        Name = "Auto Favorite Pet",
-        Default = false,
-        Callback = function(v) HubState.Settings.AutoFavoritePet = v end
-    })
+    PetsMgmtSec:CreateToggle("Auto Favorite Pet", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoFavoritePet = v
+    end)
 
-    PetsTab:AddDropdown({
-        Name = "Favorite Min Rarity",
-        Options = { "Rare", "Epic", "Legendary", "Mythic" },
-        Default = "Legendary",
-        Callback = function(v) HubState.Settings.FavoriteMinRarity = v end
-    })
+    PetsMgmtSec:CreateDropdown(
+        "Favorite Min Rarity",
+        { "Rare", "Epic", "Legendary", "Mythic" },
+        "Legendary",
+        0.2,
+        function(v) HubState.Settings.FavoriteMinRarity = v end
+    )
 
-    PetsTab:AddToggle({
-        Name = "Favorite All Mutations",
-        Default = true,
-        Callback = function(v) HubState.Settings.FavoriteMutation = v end
-    })
+    PetsMgmtSec:CreateToggle("Favorite All Mutations", true, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.FavoriteMutation = v
+    end)
 
-    PetsTab:AddButton({
-        Name = "Favorite Pets Now",
-        Callback = function()
-            Helpers.FireRemoteByKeywords({"favorite", "lockpet"})
-            Notify("Pets", "Marked qualifying pets as favorite.", 2)
-        end
-    })
+    PetsMgmtSec:CreateButton("Favorite Pets Now", function()
+        Helpers.FireRemoteByKeywords({"favorite", "lockpet"})
+        Notify(Library, "Pets", "Marked qualifying pets as favorite.", 2)
+    end)
 
-    PetsTab:AddSection("Auto Sell Pets")
+    local PetsSellSec = PetsTab:CreateSection("Auto Sell Pets")
 
-    PetsTab:AddToggle({
-        Name = "Auto Sell Pets",
-        Default = false,
-        Callback = function(v) HubState.Settings.AutoSellPet = v end
-    })
+    PetsSellSec:CreateToggle("Auto Sell Pets", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoSellPet = v
+    end)
 
-    PetsTab:AddDropdown({
-        Name = "Sell Pet Rule",
-        Options = { "Rarity Below", "Income Below", "Duplicates Only" },
-        Default = "Rarity Below",
-        Callback = function(v) HubState.Settings.SellPetRule = v end
-    })
+    PetsSellSec:CreateDropdown(
+        "Sell Pet Rule",
+        { "Rarity Below", "Income Below", "Duplicates Only" },
+        "Rarity Below",
+        0.2,
+        function(v) HubState.Settings.SellPetRule = v end
+    )
 
-    PetsTab:AddDropdown({
-        Name = "Sell Below Rarity",
-        Options = { "Common", "Rare", "Epic", "Legendary" },
-        Default = "Rare",
-        Callback = function(v) HubState.Settings.PetMaxRarity = v end
-    })
+    PetsSellSec:CreateDropdown(
+        "Sell Below Rarity",
+        { "Common", "Rare", "Epic", "Legendary" },
+        "Rare",
+        0.2,
+        function(v) HubState.Settings.PetMaxRarity = v end
+    )
 
-    PetsTab:AddSlider({
-        Name = "Income Threshold",
-        Min = 10,
-        Max = 5000,
-        Increase = 50,
-        Default = 100,
-        Callback = function(v) HubState.Settings.PetIncomeThreshold = v end
-    })
+    PetsSellSec:CreateSlider(
+        "Income Threshold",
+        10,
+        5000,
+        100,
+        Color3.fromRGB(0, 170, 255),
+        function(v) HubState.Settings.PetIncomeThreshold = v end
+    )
 
-    PetsTab:AddDropdown({
-        Name = "Blacklist From Selling",
-        Options = { "None", "Favorites Only", "Mutations Only" },
-        Default = "Favorites Only",
-        Callback = function(v) HubState.Settings.BlacklistSellPets = v end
-    })
+    PetsSellSec:CreateDropdown(
+        "Blacklist From Selling",
+        { "None", "Favorites Only", "Mutations Only" },
+        "Favorites Only",
+        0.2,
+        function(v) HubState.Settings.BlacklistSellPets = v end
+    )
 
-    PetsTab:AddButton({
-        Name = "Sell Matching Pets Now",
-        Callback = function()
-            Helpers.FireRemoteByKeywords({"sellpet", "sellpets"})
-            Notify("Pets Sold", "Processed pet sale.", 2)
-        end
-    })
+    PetsSellSec:CreateButton("Sell Matching Pets Now", function()
+        Helpers.FireRemoteByKeywords({"sellpet", "sellpets"})
+        Notify(Library, "Pets Sold", "Processed pet sale.", 2)
+    end)
 
     -- ════════════════════════════════════════════════════════════════════
     -- 6.  MONSTER & ECONOMY TAB
     -- ════════════════════════════════════════════════════════════════════
-    local EconomyTab = Window:MakeTab({
-        Name = "Monster & Economy",
-        Icon = "ghost"
-    })
+    local EconomyTab = Window:CreateTab("Monster & Economy", false, "rbxassetid://10709761530")
 
-    EconomyTab:AddSection("Hungry Monster")
+    local MonsterSec = EconomyTab:CreateSection("Hungry Monster")
 
-    EconomyTab:AddToggle({
-        Name = "Auto Feed Monster",
-        Default = false,
-        Callback = function(v)
-            HubState.Settings.AutoFeedMonster = v
-            Notify("Monster", v and "✅ Feeding Monster" or "⛔ Stopped", 2)
-        end
-    })
+    MonsterSec:CreateToggle("Auto Feed Monster", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoFeedMonster = v
+        Notify(Library, "Monster", v and "✅ Feeding Monster" or "⛔ Stopped", 2)
+    end)
 
-    EconomyTab:AddDropdown({
-        Name = "Feed Max Rarity",
-        Options = { "Common", "Rare", "Epic", "Legendary" },
-        Default = "Rare",
-        Callback = function(v) HubState.Settings.FeedMaxRarity = v end
-    })
+    MonsterSec:CreateDropdown(
+        "Feed Max Rarity",
+        { "Common", "Rare", "Epic", "Legendary" },
+        "Rare",
+        0.2,
+        function(v) HubState.Settings.FeedMaxRarity = v end
+    )
 
-    EconomyTab:AddToggle({
-        Name = "Auto Claim Monster Chest",
-        Default = false,
-        Callback = function(v) HubState.Settings.AutoClaimChest = v end
-    })
+    MonsterSec:CreateToggle("Auto Claim Monster Chest", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoClaimChest = v
+    end)
 
-    EconomyTab:AddSection("Egg Selling Merchant")
+    local EggSellSec = EconomyTab:CreateSection("Egg Selling Merchant")
 
-    EconomyTab:AddToggle({
-        Name = "Auto Sell Eggs",
-        Default = false,
-        Callback = function(v) HubState.Settings.AutoSellEgg = v end
-    })
+    EggSellSec:CreateToggle("Auto Sell Eggs", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.AutoSellEgg = v
+    end)
 
-    EconomyTab:AddDropdown({
-        Name = "Sell Below Rarity",
-        Options = { "Common", "Rare", "Epic" },
-        Default = "Common",
-        Callback = function(v) HubState.Settings.EggMaxRarity = v end
-    })
+    EggSellSec:CreateDropdown(
+        "Sell Below Rarity",
+        { "Common", "Rare", "Epic" },
+        "Common",
+        0.2,
+        function(v) HubState.Settings.EggMaxRarity = v end
+    )
 
-    EconomyTab:AddButton({
-        Name = "Sell Eggs Now",
-        Callback = function()
-            Helpers.FireRemoteByKeywords({"sellegg", "selleggs"})
-            Notify("Economy", "Sold qualifying eggs to merchant.", 2)
-        end
-    })
+    EggSellSec:CreateButton("Sell Eggs Now", function()
+        Helpers.FireRemoteByKeywords({"sellegg", "selleggs"})
+        Notify(Library, "Economy", "Sold qualifying eggs to merchant.", 2)
+    end)
 
     -- ════════════════════════════════════════════════════════════════════
     -- 7.  LOCAL PLAYER TAB
     -- ════════════════════════════════════════════════════════════════════
-    local PlayerTab = Window:MakeTab({
-        Name = "Local Player",
-        Icon = "user"
-    })
+    local PlayerTab = Window:CreateTab("Local Player", false, "rbxassetid://10709761530")
 
-    PlayerTab:AddSection("Movement & Jump")
+    local PlayerMoveSec = PlayerTab:CreateSection("Movement & Jump")
 
-    PlayerTab:AddSlider({
-        Name = "WalkSpeed",
-        Min = 16,
-        Max = 350,
-        Increase = 1,
-        Default = 16,
-        Callback = function(v)
+    PlayerMoveSec:CreateSlider(
+        "WalkSpeed",
+        16,
+        350,
+        16,
+        Color3.fromRGB(0, 170, 255),
+        function(v)
             HubState.Settings.WalkSpeed = v
             Modules.Player.SetWalkSpeed(v, Helpers)
         end
-    })
+    )
 
-    PlayerTab:AddSlider({
-        Name = "JumpPower",
-        Min = 50,
-        Max = 350,
-        Increase = 5,
-        Default = 50,
-        Callback = function(v)
+    PlayerMoveSec:CreateSlider(
+        "JumpPower",
+        50,
+        350,
+        50,
+        Color3.fromRGB(0, 170, 255),
+        function(v)
             HubState.Settings.JumpPower = v
             Modules.Player.SetJumpPower(v, Helpers)
         end
-    })
+    )
 
-    PlayerTab:AddSection("Speed Presets")
+    local PlayerPresetsSec = PlayerTab:CreateSection("Speed Presets")
 
-    PlayerTab:AddButton({
-        Name = "Default WalkSpeed (16)",
-        Callback = function()
-            HubState.Settings.WalkSpeed = 16
-            Modules.Player.SetWalkSpeed(16, Helpers)
-            Notify("Speed", "WalkSpeed set to 16", 2)
-        end
-    })
+    PlayerPresetsSec:CreateButton("Default WalkSpeed (16)", function()
+        HubState.Settings.WalkSpeed = 16
+        Modules.Player.SetWalkSpeed(16, Helpers)
+        Notify(Library, "Speed", "WalkSpeed set to 16", 2)
+    end)
 
-    PlayerTab:AddButton({
-        Name = "Fast Speed (50)",
-        Callback = function()
-            HubState.Settings.WalkSpeed = 50
-            Modules.Player.SetWalkSpeed(50, Helpers)
-            Notify("Speed", "WalkSpeed set to 50", 2)
-        end
-    })
+    PlayerPresetsSec:CreateButton("Fast Speed (50)", function()
+        HubState.Settings.WalkSpeed = 50
+        Modules.Player.SetWalkSpeed(50, Helpers)
+        Notify(Library, "Speed", "WalkSpeed set to 50", 2)
+    end)
 
-    PlayerTab:AddButton({
-        Name = "Flash Speed (150)",
-        Callback = function()
-            HubState.Settings.WalkSpeed = 150
-            Modules.Player.SetWalkSpeed(150, Helpers)
-            Notify("Speed", "WalkSpeed set to 150", 2)
-        end
-    })
+    PlayerPresetsSec:CreateButton("Flash Speed (150)", function()
+        HubState.Settings.WalkSpeed = 150
+        Modules.Player.SetWalkSpeed(150, Helpers)
+        Notify(Library, "Speed", "WalkSpeed set to 150", 2)
+    end)
 
-    PlayerTab:AddButton({
-        Name = "God Speed (300)",
-        Callback = function()
-            HubState.Settings.WalkSpeed = 300
-            Modules.Player.SetWalkSpeed(300, Helpers)
-            Notify("Speed", "WalkSpeed set to 300", 2)
-        end
-    })
+    PlayerPresetsSec:CreateButton("God Speed (300)", function()
+        HubState.Settings.WalkSpeed = 300
+        Modules.Player.SetWalkSpeed(300, Helpers)
+        Notify(Library, "Speed", "WalkSpeed set to 300", 2)
+    end)
 
-    PlayerTab:AddSection("Anti-Cheat Bypass Movement")
+    local PlayerBypassSec = PlayerTab:CreateSection("Anti-Cheat Bypass Movement")
 
-    PlayerTab:AddToggle({
-        Name = "CFrame Speed Hack",
-        Default = false,
-        Callback = function(v) HubState.Settings.CFrameSpeed = v end
-    })
+    PlayerBypassSec:CreateToggle("CFrame Speed Hack", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.CFrameSpeed = v
+    end)
 
-    PlayerTab:AddSlider({
-        Name = "CFrame Multiplier",
-        Min = 1,
-        Max = 10,
-        Increase = 1,
-        Default = 2,
-        Callback = function(v) HubState.Settings.CFrameSpeedMultiplier = v end
-    })
+    PlayerBypassSec:CreateSlider(
+        "CFrame Multiplier",
+        1,
+        10,
+        2,
+        Color3.fromRGB(0, 170, 255),
+        function(v) HubState.Settings.CFrameSpeedMultiplier = v end
+    )
 
-    PlayerTab:AddSection("Player Abilities")
+    local PlayerAbilitiesSec = PlayerTab:CreateSection("Player Abilities")
 
-    PlayerTab:AddToggle({
-        Name = "Infinite Jump",
-        Default = false,
-        Callback = function(v) HubState.Settings.InfJump = v end
-    })
+    PlayerAbilitiesSec:CreateToggle("Infinite Jump", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.InfJump = v
+    end)
 
-    PlayerTab:AddToggle({
-        Name = "Noclip (Walk Through Walls)",
-        Default = false,
-        Callback = function(v) HubState.Settings.Noclip = v end
-    })
+    PlayerAbilitiesSec:CreateToggle("Noclip (Walk Through Walls)", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        HubState.Settings.Noclip = v
+    end)
 
     -- ════════════════════════════════════════════════════════════════════
     -- 8.  VISUALS (ESP) TAB
     -- ════════════════════════════════════════════════════════════════════
-    local VisualsTab = Window:MakeTab({
-        Name = "Visuals (ESP)",
-        Icon = "eye"
-    })
+    local VisualsTab = Window:CreateTab("Visuals (ESP)", false, "rbxassetid://10709761530")
 
-    VisualsTab:AddSection("ESP Highlights")
+    local VisualsHighlightSec = VisualsTab:CreateSection("ESP Highlights")
 
-    VisualsTab:AddToggle({
-        Name = "ESP Eggs",
-        Default = false,
-        Callback = function(v)
-            Modules.Visuals.SetEggESP(v, HubState)
-            Notify("Visuals", v and "Egg ESP Enabled" or "Egg ESP Disabled", 2)
-        end
-    })
+    VisualsHighlightSec:CreateToggle("ESP Eggs", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        Modules.Visuals.SetEggESP(v, HubState)
+        Notify(Library, "Visuals", v and "Egg ESP Enabled" or "Egg ESP Disabled", 2)
+    end)
 
-    VisualsTab:AddToggle({
-        Name = "ESP Players",
-        Default = false,
-        Callback = function(v)
-            Modules.Visuals.SetPlayerESP(v, HubState)
-            Notify("Visuals", v and "Player ESP Enabled" or "Player ESP Disabled", 2)
-        end
-    })
+    VisualsHighlightSec:CreateToggle("ESP Players", false, Color3.fromRGB(0, 255, 120), 0.2, function(v)
+        Modules.Visuals.SetPlayerESP(v, HubState)
+        Notify(Library, "Visuals", v and "Player ESP Enabled" or "Player ESP Disabled", 2)
+    end)
 
-    VisualsTab:AddSection("ESP Color Legend")
+    local VisualsLegendSec = VisualsTab:CreateSection("ESP Color Legend")
 
-    VisualsTab:AddParagraph({
+    VisualsLegendSec:CreateParagraph(
         "Color Guide",
         "• Green: Infested / Toxic Eggs\n• Red: Regular Eggs\n• Yellow / Cyan: Secret / Divine Eggs"
-    })
+    )
 
     -- ════════════════════════════════════════════════════════════════════
     -- 9.  SETTINGS TAB
     -- ════════════════════════════════════════════════════════════════════
-    local SettingsTab = Window:MakeTab({
-        Name = "Settings",
-        Icon = "settings"
-    })
+    local SettingsTab = Window:CreateTab("Settings", false, "rbxassetid://10709761530")
 
-    SettingsTab:AddSection("Theme & Style")
+    local SettingsThemeSec = SettingsTab:CreateSection("Theme & Aesthetics")
 
-    SettingsTab:AddDropdown({
-        Name = "Select Theme",
-        Options = { "Darker", "Dark", "Purple" },
-        Default = "Darker",
-        Callback = function(v)
+    SettingsThemeSec:CreateDropdown(
+        "Select Theme",
+        {
+            "Nordic Dark", "Default", "Lighter", "Light", "Light+",
+            "Discord", "Red And Black", "Nordic Light", "Purple",
+            "Sentinel", "Synapse X", "Krnl", "Script-Ware", "Kiriot"
+        },
+        "Nordic Dark",
+        0.2,
+        function(v)
             pcall(function()
-                redzlib:SetTheme(v)
-                Notify("Theme", "Switched theme to " .. v, 2)
+                if Library and type(Library.ChangeTheme) == "function" then
+                    Library:ChangeTheme(v)
+                    Notify(Library, "Theme Changed", "Theme set to " .. v, 2)
+                end
             end)
         end
-    })
+    )
 
-    SettingsTab:AddSection("Script Information")
-
-    SettingsTab:AddParagraph({
-        "Exiles Script Hub",
-        "Version: v3.5 (Redz UI)\nDeveloper: DEV ZAX\nDiscord: discord.gg/exileshub"
-    })
-
-    SettingsTab:AddButton({
-        Name = "Unload / Close Exiles Hub",
-        Callback = function()
-            Window:Dialog({
-                Title = "Unload Hub",
-                Text = "Are you sure you want to stop all automation and unload the UI?",
-                Options = {
-                    { "Confirm", function()
-                        HubState.Cleanup()
-                        pcall(function()
-                            local core = game:GetService("CoreGui"):FindFirstChild("redz Library V5")
-                            if core then core:Destroy() end
-                        end)
-                        Notify("Exiles Hub", "Script unloaded safely.", 3)
-                    end },
-                    { "Cancel", function() end }
-                }
-            })
+    SettingsThemeSec:CreateSlider(
+        "UI Transparency (%)",
+        0,
+        90,
+        0,
+        Color3.fromRGB(0, 170, 255),
+        function(v)
+            pcall(function()
+                if Library and type(Library.SetTransparency) == "function" then
+                    Library:SetTransparency(v / 100)
+                end
+            end)
         end
-    })
+    )
+
+    local SettingsControlsSec = SettingsTab:CreateSection("Keybinds & Controls")
+
+    SettingsControlsSec:CreateKeybind(
+        "Toggle UI Key",
+        "RightControl",
+        function()
+            pcall(function()
+                if Library and type(Library.ToggleUI) == "function" then
+                    Library:ToggleUI()
+                end
+            end)
+        end
+    )
+
+    SettingsControlsSec:CreateButton("Toggle UI Visibility (Show / Hide)", function()
+        pcall(function()
+            if Library and type(Library.ToggleUI) == "function" then
+                Library:ToggleUI()
+            end
+        end)
+    end)
+
+    local SettingsInfoSec = SettingsTab:CreateSection("Script Information")
+
+    SettingsInfoSec:CreateParagraph(
+        "Exiles Script Hub",
+        "Version: v3.5 (Visual UI)\nDeveloper: DEV ZAX\nDiscord: discord.gg/exileshub\nUI Engine: Visual UI Library"
+    )
+
+    SettingsInfoSec:CreateButton("Unload / Close Exiles Hub", function()
+        Notify(Library, "Unloading", "Stopping automation loops...", 2)
+        task.wait(0.3)
+        HubState.Cleanup()
+        pcall(function()
+            if Library and type(Library.DestroyUI) == "function" then
+                Library:DestroyUI()
+            end
+        end)
+        pcall(function()
+            local core = game:GetService("CoreGui"):FindFirstChild("Visual UI Library | .gg/puxxCphTnK")
+            if core then core:Destroy() end
+        end)
+        pcall(function()
+            local notif = game:GetService("CoreGui"):FindFirstChild("Visual UI Library | .gg/puxxCphTnK | Notifications")
+            if notif then notif:Destroy() end
+        end)
+        Notify(Library, "Exiles Hub", "Script unloaded safely.", 3)
+    end)
 
     return Window
 end

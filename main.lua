@@ -2,7 +2,7 @@
     ╔═══════════════════════════════════════════════════════════╗
     ║     EXILES SCRIPT HUB  ·  MASTER ENTRY POINT              ║
     ║     Architecture : Modular MVC                             ║
-    ║     Library      : RedzLib (RedzHub UI)                    ║
+    ║     Library      : Visual UI Library                      ║
     ║     Game         : Steal An Egg (ID: 107778070777162)      ║
     ║     Author       : DEV ZAX                                 ║
     ╚═══════════════════════════════════════════════════════════╝
@@ -15,33 +15,32 @@ if game.PlaceId ~= TARGET_PLACE_ID and game.GameId ~= TARGET_PLACE_ID then
         .. " (Target: " .. tostring(TARGET_PLACE_ID) .. ")")
 end
 
--- ── RedzLib UI Loader (Multi-Source Robust Loader) ─────────────────────────
-local REDZ_URLS = {
-    "https://raw.githubusercontent.com/tbao143/Library-ui/refs/heads/main/Redzhubui",
-    "https://raw.githubusercontent.com/kingsoluctionsforce-droid/1010183818289192028382899283818283828918282719393828283838828182838/refs/heads/main/REDzHubui",
-    "https://raw.githubusercontent.com/mmtandico/ExilesHub/refs/heads/main/src/ui/redzlib.lua"
+-- ── Visual UI Library Loader (Multi-Source Robust Loader) ──────────────────
+local VISUAL_URLS = {
+    "https://raw.githubusercontent.com/VisualRoblox/Roblox/main/UI-Libraries/Visual%20UI%20Library/Source.lua",
+    "https://raw.githubusercontent.com/mmtandico/ExilesHub/refs/heads/main/src/ui/visuallib.lua"
 }
 
-local redzlib = nil
-for _, url in ipairs(REDZ_URLS) do
+local Library = nil
+for _, url in ipairs(VISUAL_URLS) do
     local ok, res = pcall(function()
         return loadstring(game:HttpGet(url))()
     end)
-    if ok and res and type(res.MakeWindow) == "function" then
-        redzlib = res
+    if ok and res and type(res.CreateWindow) == "function" then
+        Library = res
         break
     end
 end
 
 -- Fallback to local file if available in executor filesystem
-if not redzlib and typeof(readfile) == "function" and typeof(isfile) == "function" then
-    for _, path in ipairs({ "src/ui/redzlib.lua", "Exiles/src/ui/redzlib.lua" }) do
+if not Library and typeof(readfile) == "function" and typeof(isfile) == "function" then
+    for _, path in ipairs({ "src/ui/visuallib.lua", "Exiles/src/ui/visuallib.lua" }) do
         if isfile(path) then
             local fn = loadstring(readfile(path))
             if fn then
                 local ok, res = pcall(fn)
-                if ok and res and type(res.MakeWindow) == "function" then
-                    redzlib = res
+                if ok and res and type(res.CreateWindow) == "function" then
+                    Library = res
                     break
                 end
             end
@@ -49,12 +48,12 @@ if not redzlib and typeof(readfile) == "function" and typeof(isfile) == "functio
     end
 end
 
-if not redzlib then
-    warn("[Exiles Hub] Failed to load RedzLib.")
+if not Library then
+    warn("[Exiles Hub] Failed to load Visual UI Library.")
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title    = "Exiles Hub Error",
-            Text     = "Failed to load RedzLib. Check network connection.",
+            Text     = "Failed to load Visual UI Library. Check network connection.",
             Duration = 5,
         })
     end)
@@ -124,6 +123,6 @@ Modules.Visuals.Init(HubState, Helpers)
 
 -- ── Build & Render UI ─────────────────────────────────────────────────────
 local UILayout = Require("ui/layout.lua")
-local Window = UILayout.Build(redzlib, HubState, Helpers, Modules)
+local Window = UILayout.Build(Library, HubState, Helpers, Modules)
 
-print("[Exiles Hub] RedzLib modular hub initialized — DEV ZAX")
+print("[Exiles Hub] Visual UI modular hub initialized — DEV ZAX")

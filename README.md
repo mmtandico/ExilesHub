@@ -1,17 +1,23 @@
-# Exiles Script Hub (Rayfield Gen 2)
+# Exiles Script Hub (Visual UI Library)
 
-A modular, high-performance Roblox Script Hub built on **Rayfield Gen 2** with dedicated support for **Steal An Egg** (`Place ID: 107778070777162`).
+A modular, high-performance Roblox Script Hub built on **Visual UI Library** with dedicated support for **Steal An Egg** (`Place ID: 107778070777162`).
 
-Official Documentation: [Sirius Rayfield Gen 2 Docs](https://docs.sirius.menu/rayfield-gen2)
+Official Source: [Visual UI Library GitHub](https://raw.githubusercontent.com/VisualRoblox/Roblox/main/UI-Libraries/Visual%20UI%20Library/Source.lua)
 
 ---
 
 ## ⚡ Quick Start (Official Loadstring)
 
-Copy and execute this single line in any Roblox executor (Delta, Codex, Arceus X, Wave, etc.):
+Copy and execute this single line in any Roblox executor (Delta, Codex, Fluxus, Arceus X, Wave, Solara, etc.):
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/mmtandico/ExilesHub/refs/heads/main/Loader.lua"))()
+```
+
+Or load directly:
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/mmtandico/ExilesHub/refs/heads/main/main.lua"))()
 ```
 
 ---
@@ -22,106 +28,82 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/mmtandico/ExilesHub/r
 - **Game URL**: `https://www.roblox.com/games/107778070777162/Steal-An-Egg`
 
 ### Included Features:
-- **Auto Farm**:
-  - **Auto Steal Eggs**: Auto scans proximity prompts with smart distance activation and anti-rate-limit delay slider.
-  - **Steal Delay Speed**: Configurable delay between steals (0.05s to 1.5s).
-  - **Auto Treadmill Speed Train**: Automatically touches speed training zones and fires training remotes.
-  - **Auto Sell / Deposit**: Automatically sells and deposits collected eggs when storage is full.
-- **Eggs & Pets**:
-  - **Egg Opener**: Select from Basic, Rare, Epic, Legendary, Mythic, Ancient, and Secret eggs.
-  - **Auto Hatch Toggle**: Continuously opens selected egg.
-  - **Instant 1x Hatch Button**: Opens a single egg on demand.
+- **Egg Predictor & Night Cycle Forecast**:
+  - Live spawn countdown and in-game day/night cycle prediction (30x night speed calculation).
+  - Server-wide egg counters (Divine, Eternal, Secret, Cosmic).
+  - 1-Click Instant Target Steal slots for rare eggs.
+  - Automatic time synchronization with Lighting.
+- **Auto Steal**:
+  - Auto scans, prioritizes, and collects eggs.
+  - Infested egg handling & bypass traps anti-trap module.
+  - Auto base nest placement & tween speed control.
+- **Treadmill & Base**:
+  - Auto treadmill speed farming.
+  - Anti-detection treadmill hiding.
+  - Base and nest upgrades.
+- **Pets & Hatching**:
+  - Auto hatch all egg types (Basic to Void).
+  - Auto equip best pets and auto favorite.
+  - Advanced auto sell with rules, rarity filters, and thresholds.
+- **Monster & Economy**:
+  - Auto feed hungry monster and claim chest.
+  - Auto sell eggs to merchant.
 - **Local Player Utilities**:
-  - **WalkSpeed & JumpPower**: Full slider control with character respawn persistence.
-  - **Infinite Jump**: Jump mid-air infinitely.
-  - **Noclip**: Walk through walls and objects cleanly without getting stuck.
-  - **Fly Mode**: Free-cam directional flight using `WASD + Space + LeftShift` with a dedicated speed slider.
-- **Teleports**:
-  - Spawn / Base teleport.
-  - Treadmill training zone teleport.
-  - Dynamic Player Teleport with server player list dropdown and one-click refresh.
+  - WalkSpeed & JumpPower sliders with quick presets.
+  - CFrame speed hack (anti-cheat bypass).
+  - Infinite Jump and Noclip.
 - **Visuals (ESP)**:
-  - **Player ESP / Chams**: Roblox Highlight system showing all server players through walls.
-  - **Egg Spawn ESP**: Golden chams showing all eggs and egg spawns on the map.
-- **Rayfield Gen 2 System**:
-  - **Sidebar Layout**: Modern rail navigation with custom icons and section headers.
-  - **Built-in Theme Switcher**: Instant transition between `cobalt`, `ember`, `amethyst`, `frost`, `rose`, and `default`.
-  - **Auto Save & Auto Load**: Remembers your toggles and slider settings across sessions in `Rayfield/Configurations/ExilesHub/`.
-  - **Safe Unloader**: Cleanly destroys UI, stops all worker loops, removes ESP highlights, resets character speeds, and frees executor memory.
+  - Highlight ESP for eggs and players with color differentiation.
+- **Visual UI Library Features**:
+  - 14 built-in sleek themes (Nordic Dark, Discord, Purple, Sentinel, Synapse X, Krnl, etc.).
+  - UI Transparency slider.
+  - Customizable Keybind (`RightControl` default) and on-screen toggle button.
+  - Safe clean unloader.
 
 ---
 
-## 📚 Rayfield Gen 2 Quick Reference
+## 📚 Visual UI Library Quick Reference
 
 ### Library Load
 ```lua
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/gen2"))()
+local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/VisualRoblox/Roblox/main/UI-Libraries/Visual%20UI%20Library/Source.lua'))()
 ```
 
 ### Window Creation
 ```lua
-local Window = Rayfield:CreateWindow({
-    name = "My Hub",
-    subtitle = "Game Name",
-    sidebarLayout = true, -- Modern left rail
-    theme = "cobalt",     -- "default", "cobalt", "ember", "amethyst", "frost", "rose"
-    configuration = {
-        autoSave = true,
-        autoLoad = true,
-        fileName = "MyConfig",
-        customFolder = "MyHubFolder",
-    },
-})
+local Window = Library:CreateWindow(
+    "Exiles Hub",               -- Hub Name
+    "Steal An Egg",             -- Game Name
+    "Exiles Hub | DEV ZAX",     -- Intro Text
+    "rbxassetid://10709761530", -- Intro Icon
+    false,                      -- ImprovePerformance
+    "ExilesHub",                -- Config Folder
+    "Nordic Dark"               -- Theme
+)
 ```
 
-### Tabs & Elements
+### Tabs, Sections & Elements
 ```lua
-local Tab = Window:CreateTab({ name = "Main", icon = 93364949241311 })
+local Tab = Window:CreateTab("Main", true, "rbxassetid://10709761530")
+local Section = Tab:CreateSection("Auto Farming")
 
 -- Toggle
-local Toggle = Tab:CreateToggle({
-    name = "Auto Farm",
-    flag = "AutoFarmFlag",
-    value = false,
-    callback = function(val) ... end,
-})
+Section:CreateToggle("Auto Steal", false, Color3.fromRGB(0, 255, 120), 0.2, function(val)
+    print("Auto Steal:", val)
+end)
 
 -- Slider
-local Slider = Tab:CreateSlider({
-    name = "Speed",
-    flag = "SpeedFlag",
-    range = { 16, 200 },
-    increment = 1,
-    value = 16,
-    suffix = " studs/s",
-    callback = function(val) ... end,
-})
+Section:CreateSlider("Tween Speed", 15, 120, 35, Color3.fromRGB(0, 170, 255), function(val)
+    print("Speed:", val)
+end)
 
 -- Dropdown
-local Dropdown = Tab:CreateDropdown({
-    name = "Select Option",
-    options = { "A", "B", "C" },
-    value = "A",
-    multiSelect = false,
-    callback = function(choice) ... end,
-})
+Section:CreateDropdown("Target Tier", { "All Eggs", "Legendary & Up" }, "All Eggs", 0.2, function(selected)
+    print("Selected:", selected)
+end)
 
--- Toasts & Notifications
-Window:Toast({ title = "Saved", subtitle = "Profile 1" })
-Window:Notify({ title = "Alert", content = "Message body", duration = 5 })
-```
-
----
-
-## 🛠 Adding More Games to the Hub
-To support multiple games, you can check `game.PlaceId` or `game.GameId`:
-
-```lua
-if game.PlaceId == 107778070777162 then
-    -- Load Steal An Egg features
-elseif game.PlaceId == 123456789 then
-    -- Load another game's tab
-else
-    -- Universal / Player tab only
-end
+-- Button
+Section:CreateButton("Claim Rewards", function()
+    print("Rewards claimed!")
+end)
 ```
