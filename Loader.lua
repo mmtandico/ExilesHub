@@ -1,71 +1,113 @@
 --[[
-    ===================================================================
-    EXILES SCRIPT HUB | UNIVERSAL LOADER
-    Repository: https://github.com/mmtandico/ExilesHub
-    ===================================================================
+    ╔═══════════════════════════════════════════════════════════╗
+    ║          EXILES HUB  ·  UNIVERSAL LOADER                  ║
+    ║          DEV: ZAX   ·  Powered by Rayfield Gen 2          ║
+    ║          Repository: github.com/mmtandico/ExilesHub        ║
+    ╚═══════════════════════════════════════════════════════════╝
 ]]
 
-local Players = game:GetService("Players")
+local Players     = game:GetService("Players")
+local RunService  = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
+-- ── Config ─────────────────────────────────────────────────────────────
 local GITHUB_RAW_BASE = "https://raw.githubusercontent.com/mmtandico/ExilesHub/refs/heads/main/"
+local VERSION         = "v3.2"
+local AUTHOR          = "DEV ZAX"
 
--- Supported Games Table
 local SupportedGames = {
-    [107778070777162] = {
-        Name = "Steal An Egg",
-        Script = "main.lua"
-    }
+    [107778070777162] = { Name = "Steal An Egg", Script = "main.lua" },
 }
 
-local currentGame = SupportedGames[game.PlaceId] or SupportedGames[game.GameId]
-
--- Notification Function
-local function ShowNotification(title, text)
+-- ── Helpers ─────────────────────────────────────────────────────────────
+local function Notify(title, text, duration)
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = title,
-            Text = text,
-            Duration = 5,
+            Title    = title,
+            Text     = text,
+            Duration = duration or 4,
         })
     end)
 end
 
-print([[
-  ______      _ _           _    _       _     
- |  ____|    (_) |         | |  | |     | |    
- | |__  __  ___| | ___  ___| |__| |_   _| |__  
- |  __| \ \/ / | |/ _ \/ __|  __  | | | | '_ \ 
- | |____ >  <| | |  __/\__ \ |  | | |_| | |_) |
- |______/_/\_\_|_|\___||___/_|  |_|\__,_|_.__/ 
-]])
-print("[Exiles Loader] Initializing for " .. LocalPlayer.Name .. "...")
+local function Wait(n)
+    local t = tick()
+    while tick() - t < n do RunService.Heartbeat:Wait() end
+end
 
-if currentGame then
-    ShowNotification("Exiles Hub", "Identified game: " .. currentGame.Name .. "\nLoading script...")
-    local url = GITHUB_RAW_BASE .. currentGame.Script .. "?v=" .. tostring(os.time())
-    local success, err = pcall(function()
-        local content = game:HttpGet(url)
-        local fn, pErr = loadstring(content)
-        if not fn then error("Parse: " .. tostring(pErr)) end
-        fn()
-    end)
-    if not success then
-        warn("[Exiles Loader] Failed: " .. tostring(err))
-        ShowNotification("Exiles Hub Error", string.sub(tostring(err), 1, 90))
+-- ── Boot Banner ─────────────────────────────────────────────────────────
+print([[
+
+  ███████╗██╗  ██╗██╗██╗     ███████╗███████╗
+  ██╔════╝╚██╗██╔╝██║██║     ██╔════╝██╔════╝
+  █████╗   ╚███╔╝ ██║██║     █████╗  ███████╗
+  ██╔══╝   ██╔██╗ ██║██║     ██╔══╝  ╚════██║
+  ███████╗██╔╝ ██╗██║███████╗███████╗███████║
+  ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝
+         H  U  B  ·  ]] .. VERSION .. [[  ·  ]] .. AUTHOR .. [[
+]])
+
+-- ── Loading Steps ───────────────────────────────────────────────────────
+local steps = {
+    { msg = "Initializing Exiles Hub " .. VERSION .. " ...",    delay = 0.4 },
+    { msg = "Checking game environment ...",                     delay = 0.4 },
+    { msg = "Fetching latest scripts from GitHub ...",           delay = 0.5 },
+    { msg = "Loading Rayfield Gen 2 framework ...",              delay = 0.3 },
+    { msg = "Injecting UI modules ...",                          delay = 0.3 },
+    { msg = "Welcome, " .. LocalPlayer.Name .. "!",             delay = 0.2 },
+}
+
+-- Show sequential loading toasts in output
+for i, step in ipairs(steps) do
+    print(string.format("  [%d/%d] %s", i, #steps, step.msg))
+    Wait(step.delay)
+end
+
+-- Initial notification
+Notify("⚡ Exiles Hub " .. VERSION, "Loading — " .. AUTHOR, 5)
+
+-- ── Game Detection & Execution ──────────────────────────────────────────
+local currentGame = SupportedGames[game.PlaceId] or SupportedGames[game.GameId]
+local scriptName  = currentGame and currentGame.Script or "main.lua"
+local gameName    = currentGame and currentGame.Name   or "Universal Mode"
+
+Notify("🎮 Game Detected", gameName .. " — fetching scripts...", 4)
+print("  [Exiles Loader] Target: " .. gameName .. " (" .. scriptName .. ")")
+
+-- ── Fetch & Execute ─────────────────────────────────────────────────────
+local url     = GITHUB_RAW_BASE .. scriptName .. "?v=" .. tostring(os.time())
+local success, err = pcall(function()
+    local content = game:HttpGet(url)
+
+    if not content or content == "" then
+        error("Empty response from GitHub.")
     end
+
+    -- Show loading animation steps
+    local loadSteps = {
+        "Parsing script ...",
+        "Verifying integrity ...",
+        "Compiling modules ...",
+        "Launching UI ...",
+    }
+    for _, s in ipairs(loadSteps) do
+        print("  [Exiles Loader] " .. s)
+        Wait(0.2)
+    end
+
+    local fn, parseErr = loadstring(content)
+    if not fn then
+        error("Parse error: " .. tostring(parseErr))
+    end
+    fn()
+end)
+
+-- ── Result ───────────────────────────────────────────────────────────────
+if success then
+    print("  [Exiles Loader] ✓ Hub loaded successfully! Enjoy, " .. LocalPlayer.Name)
+    Notify("✅ Exiles Hub Ready", "Welcome " .. LocalPlayer.Name .. " — " .. AUTHOR, 5)
 else
-    -- Fallback: Load main script
-    ShowNotification("Exiles Hub", "Loading Universal Hub...")
-    local url = GITHUB_RAW_BASE .. "main.lua?v=" .. tostring(os.time())
-    local success, err = pcall(function()
-        local content = game:HttpGet(url)
-        local fn, pErr = loadstring(content)
-        if not fn then error("Parse: " .. tostring(pErr)) end
-        fn()
-    end)
-    if not success then
-        warn("[Exiles Loader] Failed: " .. tostring(err))
-        ShowNotification("Exiles Hub Error", string.sub(tostring(err), 1, 90))
-    end
+    local errMsg = tostring(err)
+    warn("  [Exiles Loader] ✗ Failed: " .. errMsg)
+    Notify("❌ Exiles Hub Error", string.sub(errMsg, 1, 90), 6)
 end
