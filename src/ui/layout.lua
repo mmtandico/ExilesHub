@@ -369,30 +369,157 @@ function UILayout.Build(WindUI, HubState, Helpers, Modules)
         Callback = function() end,
     })
 
-    -- ── Timer Sync & Calibration ──────────────────────────────────────────
-    PredictorTab:Section({ Title = "Timer Synchronization & Calibration" })
+    -- ── Timer Sync & Calibration Suite ───────────────────────────────────
+    PredictorTab:Section({ Title = "Manual Timer Sync & Calibration" })
 
-    local syncGroup = PredictorTab:Group()
-    syncGroup:Button({
-        Title    = "Sync to 05:00",
-        Desc     = "Tap when new eggs spawn to lock timer",
+    -- Quick Presets (Row 1)
+    local presetRow1 = PredictorTab:Group()
+    presetRow1:Button({
+        Title    = "Sync: 05:00",
+        Desc     = "Tap when new eggs spawn",
         Icon     = "solar:restart-bold",
         Color    = Color3.fromHex("#18181b"),
         Callback = function()
-            Modules.Predictor.SyncTimer(300)
-            Notify(WindUI, "Timer Calibrated", "Reset spawn countdown to 05:00.", "solar:check-circle-bold", 3)
+            Modules.Predictor.SetRemainingSeconds(300)
+            Notify(WindUI, "Synced to 05:00", "Countdown locked to 5 minutes.", "solar:check-circle-bold", 2)
         end,
     })
-    syncGroup:Space()
-    syncGroup:Button({
-        Title    = "Sync from In-Game HUD",
-        Desc     = "Auto-bind to on-screen game timer",
-        Icon     = "solar:refresh-circle-bold",
+    presetRow1:Space()
+    presetRow1:Button({
+        Title    = "Sync: 04:00",
+        Desc     = "Set 4 minutes remaining",
+        Icon     = "solar:clock-circle-bold",
         Color    = Color3.fromHex("#18181b"),
         Callback = function()
-            Modules.Predictor.ManualOffset = 0
-            Modules.Predictor.LockedToGuiTimer = false
-            Notify(WindUI, "HUD Auto-Sync", "Rescanning on-screen timers.", "solar:refresh-circle-bold", 3)
+            Modules.Predictor.SetRemainingSeconds(240)
+            Notify(WindUI, "Synced to 04:00", "Countdown locked to 4 minutes.", "solar:check-circle-bold", 2)
+        end,
+    })
+
+    -- Quick Presets (Row 2)
+    local presetRow2 = PredictorTab:Group()
+    presetRow2:Button({
+        Title    = "Sync: 03:00",
+        Desc     = "Set 3 minutes remaining",
+        Icon     = "solar:clock-circle-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.SetRemainingSeconds(180)
+            Notify(WindUI, "Synced to 03:00", "Countdown locked to 3 minutes.", "solar:check-circle-bold", 2)
+        end,
+    })
+    presetRow2:Space()
+    presetRow2:Button({
+        Title    = "Sync: 02:00",
+        Desc     = "Set 2 minutes remaining",
+        Icon     = "solar:clock-circle-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.SetRemainingSeconds(120)
+            Notify(WindUI, "Synced to 02:00", "Countdown locked to 2 minutes.", "solar:check-circle-bold", 2)
+        end,
+    })
+
+    -- Quick Presets (Row 3)
+    local presetRow3 = PredictorTab:Group()
+    presetRow3:Button({
+        Title    = "Sync: 01:00",
+        Desc     = "Set 1 minute remaining",
+        Icon     = "solar:clock-circle-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.SetRemainingSeconds(60)
+            Notify(WindUI, "Synced to 01:00", "Countdown locked to 1 minute.", "solar:check-circle-bold", 2)
+        end,
+    })
+    presetRow3:Space()
+    presetRow3:Button({
+        Title    = "Sync: 00:30 (Imminent)",
+        Desc     = "Set 30 seconds remaining",
+        Icon     = "solar:alarm-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.SetRemainingSeconds(30)
+            Notify(WindUI, "Synced to 00:30", "Spawn imminent alert!", "solar:alarm-bold", 2)
+        end,
+    })
+
+    -- Fine-Tune Offsets (+/- 30s)
+    local adjustRow1 = PredictorTab:Group()
+    adjustRow1:Button({
+        Title    = "+30 Seconds",
+        Desc     = "Add 30s to current countdown",
+        Icon     = "solar:add-circle-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.AdjustSeconds(30)
+            Notify(WindUI, "Adjusted +30s", "Shifted countdown forward.", "solar:check-circle-bold", 1)
+        end,
+    })
+    adjustRow1:Space()
+    adjustRow1:Button({
+        Title    = "-30 Seconds",
+        Desc     = "Subtract 30s from countdown",
+        Icon     = "solar:minus-circle-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.AdjustSeconds(-30)
+            Notify(WindUI, "Adjusted -30s", "Shifted countdown backward.", "solar:check-circle-bold", 1)
+        end,
+    })
+
+    -- Fine-Tune Offsets (+/- 10s)
+    local adjustRow2 = PredictorTab:Group()
+    adjustRow2:Button({
+        Title    = "+10 Seconds",
+        Desc     = "Fine-tune +10s",
+        Icon     = "solar:add-circle-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.AdjustSeconds(10)
+            Notify(WindUI, "Adjusted +10s", "Fine-tuned forward.", "solar:check-circle-bold", 1)
+        end,
+    })
+    adjustRow2:Space()
+    adjustRow2:Button({
+        Title    = "-10 Seconds",
+        Desc     = "Fine-tune -10s",
+        Icon     = "solar:minus-circle-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.AdjustSeconds(-10)
+            Notify(WindUI, "Adjusted -10s", "Fine-tuned backward.", "solar:check-circle-bold", 1)
+        end,
+    })
+
+    -- Sync to Day/Night Cycle
+    PredictorTab:Button({
+        Title    = "Sync Countdown to Nightfall",
+        Desc     = "Locks spawn timer to the in-game Day/Night cycle transition",
+        Icon     = "solar:moon-bold",
+        Color    = Color3.fromHex("#1e1e2e"),
+        Callback = function()
+            local cycleInfo = Modules.Predictor.GetUpcomingCycleInfo()
+            if cycleInfo.NightSeconds and cycleInfo.NightSeconds > 0 then
+                Modules.Predictor.SetRemainingSeconds(cycleInfo.NightSeconds)
+                Notify(WindUI, "Synced to Nightfall", string.format("Locked to %s until night transition.", cycleInfo.NightFormatted), "solar:moon-bold", 3)
+            end
+        end,
+    })
+
+    -- Cycle Length Selector
+    PredictorTab:Dropdown({
+        Title    = "Cycle Duration",
+        Flag     = "SpawnCycleLengthDropdown",
+        Values   = { "5 Minutes (300s)", "4.5 Minutes (270s)", "4 Minutes (240s)", "3 Minutes (180s)" },
+        Value    = "5 Minutes (300s)",
+        Callback = function(val)
+            local sec = 300
+            if val:find("270") then sec = 270
+            elseif val:find("240") then sec = 240
+            elseif val:find("180") then sec = 180 end
+            Modules.Predictor.SetCycleLength(sec)
+            Notify(WindUI, "Cycle Interval Updated", "Cycle set to " .. tostring(sec) .. " seconds.", "solar:clock-circle-bold", 2)
         end,
     })
 

@@ -147,71 +147,78 @@ local function FindInGameTimerFromWorkspace()
 end
 
 -- ── 3. Real In-Game Night Cycle Extractor (Lighting) ─────────────────────────
+-- ── 3. Real In-Game Night Cycle Extractor (Measured from Lighting.ClockTime) ──
+local measuredClockSpeed = 0.0888 -- ~24 in-game hours per ~270s default
+local lastClockValue = Lighting.ClockTime
+local lastClockSampleTick = tick()
+
+task.spawn(function()
+    while true do
+        task.wait(2)
+        local now = tick()
+        local currentClock = Lighting.ClockTime
+        local dt = now - lastClockSampleTick
+        if dt > 0 then
+            local deltaClock = currentClock - lastClockValue
+            if deltaClock < -12 then deltaClock = deltaClock + 24 end -- Wrapped midnight
+            if deltaClock > 0 and deltaClock < 5 then
+                measuredClockSpeed = deltaClock / dt
+            end
+        end
+        lastClockValue = currentClock
+        lastClockSampleTick = now
+    end
+end)
+
 local function GetLightingNightStatus()
     local clock = 12
     pcall(function() clock = Lighting.ClockTime end)
 
-    -- In Steal An Egg / Roblox, Night is ClockTime >= 18 or ClockTime < 6
     local isNight = (clock >= 18 or clock < 6)
-
-    local secondsToTransition = 0
+    local hoursLeft = 0
     if isNight then
-        -- Remaining night duration until 06:00
-        local hoursLeft = (clock >= 18) and (24 - clock + 6) or (6 - clock)
-        secondsToTransition = math.floor(hoursLeft * 15) -- Lighting game-time scaling
+        hoursLeft = (clock >= 18) and (24 - clock + 6) or (6 - clock)
     else
-        -- Daytime duration until 18:00
-        local hoursLeft = 18 - clock
-        secondsToTransition = math.floor(hoursLeft * 15)
+        hoursLeft = 18 - clock
     end
+
+    local safeSpeed = (measuredClockSpeed > 0.001) and measuredClockSpeed or 0.0888
+    local secondsToTransition = math.max(0, math.floor(hoursLeft / safeSpeed))
 
     local m = math.floor(secondsToTransition / 60)
     local s = secondsToTransition % 60
 
+    local inGameH = math.floor(clock)
+    local inGameM = math.floor((clock % 1) * 60)
+    local inGameTimeStr = string.format("%02d:%02d", inGameH, inGameM)
+
     return {
-        IsNight   = isNight,
-        ClockTime = clock,
-        Status    = isNight and "🌙 NIGHT ACTIVE (30x Hatch Speed)" or "☀️ DAYTIME",
-        Formatted = string.format("%02d:%02d", m, s),
-        Seconds   = secondsToTransition,
+        IsNight       = isNight,
+        ClockTime     = clock,
+        InGameTimeStr = inGameTimeStr,
+        Status        = isNight and ("🌙 NIGHT ACTIVE (Ends in " .. string.format("%02d:%02d", m, s) .. ")")
+                                or ("☀️ DAYTIME (Nightfall in " .. string.format("%02d:%02d", m, s) .. ")"),
+        Formatted     = string.format("%02d:%02d", m, s),
+        Seconds       = secondsToTransition,
     }
 end
 
 -- ── 4. Accurate Global Spawn Cycle Calculator ────────────────────────────────
 function EggPredictor.GetUpcomingCycleInfo()
-    -- Check Live HUD Timer First
-    local guiTimer = FindInGameTimerFromGui()
-    local worldTimer = FindInGameTimerFromWorkspace()
+    local serverNow = 0
+    local ok = pcall(function() serverNow = Workspace:GetServerTimeNow() end)
+    if not ok or serverNow == 0 then serverNow = os.time() end
 
-    local finalSeconds = 0
-    local formattedText = "05:00"
-    local timerSource = "Server Epoch"
+    -- Apply user manual calibration offset
+    local adjustedNow = serverNow + (EggPredictor.ManualOffset or 0)
+    local finalSeconds = EggPredictor.SpawnCycleSeconds - (math.floor(adjustedNow) % EggPredictor.SpawnCycleSeconds)
+    if finalSeconds < 0 then finalSeconds = finalSeconds + EggPredictor.SpawnCycleSeconds end
 
-    if guiTimer and guiTimer.Seconds > 0 then
-        finalSeconds = guiTimer.Seconds
-        formattedText = guiTimer.Text
-        timerSource = guiTimer.Source
-        EggPredictor.LockedToGuiTimer = true
-    elseif worldTimer and worldTimer.Seconds > 0 then
-        finalSeconds = worldTimer.Seconds
-        formattedText = worldTimer.Text
-        timerSource = worldTimer.Source
-    else
-        -- Fallback: Server-synchronized universal epoch formula
-        local serverNow = 0
-        local ok = pcall(function() serverNow = Workspace:GetServerTimeNow() end)
-        if not ok or serverNow == 0 then serverNow = os.time() end
+    local m = math.floor(finalSeconds / 60)
+    local s = finalSeconds % 60
+    local formattedText = string.format("%02d:%02d", m, s)
 
-        -- Apply user manual calibration offset if set
-        local adjustedNow = serverNow + (EggPredictor.ManualOffset or 0)
-        finalSeconds = EggPredictor.SpawnCycleSeconds - (math.floor(adjustedNow) % EggPredictor.SpawnCycleSeconds)
-        if finalSeconds < 0 then finalSeconds = finalSeconds + EggPredictor.SpawnCycleSeconds end
-
-        local m = math.floor(finalSeconds / 60)
-        local s = finalSeconds % 60
-        formattedText = string.format("%02d:%02d", m, s)
-        timerSource = (EggPredictor.ManualOffset ~= 0) and "Calibrated Sync" or "Server Sync (Epoch)"
-    end
+    local timerSource = (EggPredictor.ManualOffset ~= 0) and "User-Calibrated Sync" or "Server Sync"
 
     -- Real Night status from Lighting
     local nightInfo = GetLightingNightStatus()
@@ -221,22 +228,34 @@ function EggPredictor.GetUpcomingCycleInfo()
         NextSpawnSeconds   = finalSeconds,
         TimerSource        = timerSource,
         IsNight            = nightInfo.IsNight,
+        InGameTimeStr      = nightInfo.InGameTimeStr,
         NightStatus        = nightInfo.Status,
         NightFormatted     = nightInfo.Formatted,
+        NightSeconds       = nightInfo.Seconds,
     }
 end
 
 -- ── 5. User Sync / Calibration Methods ────────────────────────────────────────
-function EggPredictor.SyncTimer(targetSeconds)
-    targetSeconds = targetSeconds or EggPredictor.SpawnCycleSeconds
-
+function EggPredictor.SetRemainingSeconds(seconds)
     local serverNow = 0
     local ok = pcall(function() serverNow = Workspace:GetServerTimeNow() end)
     if not ok or serverNow == 0 then serverNow = os.time() end
 
     local currentEpochRemainder = EggPredictor.SpawnCycleSeconds - (math.floor(serverNow) % EggPredictor.SpawnCycleSeconds)
-    EggPredictor.ManualOffset = (targetSeconds - currentEpochRemainder)
+    EggPredictor.ManualOffset = (seconds - currentEpochRemainder)
     EggPredictor.LockedToGuiTimer = false
+end
+
+function EggPredictor.AdjustSeconds(delta)
+    EggPredictor.ManualOffset = (EggPredictor.ManualOffset or 0) + delta
+end
+
+function EggPredictor.SetCycleLength(seconds)
+    EggPredictor.SpawnCycleSeconds = seconds or 300
+end
+
+function EggPredictor.SyncTimer(targetSeconds)
+    EggPredictor.SetRemainingSeconds(targetSeconds or EggPredictor.SpawnCycleSeconds)
 end
 
 -- ── 6. 100% Accurate Game-Wide Egg Inspector ─────────────────────────────────
