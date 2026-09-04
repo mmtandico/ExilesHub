@@ -52,7 +52,7 @@ local steps = {
     { msg = "Initializing Exiles Hub " .. VERSION .. " ...",    delay = 0.4 },
     { msg = "Checking game environment ...",                     delay = 0.4 },
     { msg = "Fetching latest scripts from GitHub ...",           delay = 0.5 },
-    { msg = "Loading Rayfield Gen 2 framework ...",              delay = 0.3 },
+    { msg = "Loading WindUI framework ...",                      delay = 0.3 },
     { msg = "Injecting UI modules ...",                          delay = 0.3 },
     { msg = "Welcome, " .. LocalPlayer.Name .. "!",             delay = 0.2 },
 }

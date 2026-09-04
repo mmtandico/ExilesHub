@@ -1,670 +1,768 @@
 --[[
     ╔═══════════════════════════════════════════════════════════╗
-    ║      EXILES SCRIPT HUB  ·  RAYFIELD GEN 2 UI LAYOUT       ║
-    ║      Theme  : Cobalt  (Deep Blue–Black Premium)            ║
-    ║      Author : DEV ZAX                                      ║
+    ║      EXILES SCRIPT HUB  ·  WINDUI UI LAYOUT               ║
+    ║      Library : WindUI (Footagesus)                         ║
+    ║      Theme   : Midnight  (Deep Blue-Black Premium)         ║
+    ║      Author  : DEV ZAX                                     ║
     ╚═══════════════════════════════════════════════════════════╝
 ]]
 
 local UILayout = {}
 
--- ── Loading animation helper ─────────────────────────────────────────────
-local function AnimatedNotify(Window, title, content, duration)
+-- ── Notification helper ───────────────────────────────────────────────────
+local function Notify(WindUI, title, content, icon, duration)
     pcall(function()
-        Window:Notify({
-            title    = title,
-            content  = content,
-            duration = duration or 4,
-        })
-    end)
-end
-
-local function SectionedToast(Window, title, sub)
-    pcall(function()
-        Window:Toast({
-            title    = title,
-            subtitle = sub or "",
-            duration = 3,
+        WindUI:Notify({
+            Title    = title,
+            Content  = content,
+            Icon     = icon or "solar:bell-bold",
+            Duration = duration or 4,
         })
     end)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────
-function UILayout.Build(Rayfield, HubState, Helpers, Modules)
+function UILayout.Build(WindUI, HubState, Helpers, Modules)
 
-    -- ── Window ───────────────────────────────────────────────────────────
-    local Window = Rayfield:CreateWindow({
-        name          = "EXILES HUB",
-        subtitle      = "Steal An Egg  ·  DEV ZAX",
-        sidebarLayout = true,
-        theme         = "cobalt",
-        showName      = "Exiles Hub",
-        configuration = {
-            autoSave     = true,
-            autoLoad     = true,
-            fileName     = "ExilesHub_ZAX",
-            customFolder = "ExilesHub",
+    -- ── Window ────────────────────────────────────────────────────────────
+    local Window = WindUI:CreateWindow({
+        Title        = "EXILES HUB",
+        Author       = "DEV ZAX",
+        Icon         = "solar:sword-bold-duotone",
+        Folder       = "ExilesHub",
+        Theme        = "Midnight",
+        ToggleKey    = Enum.KeyCode.RightControl,
+        NewElements  = true,
+        HideSearchBar = false,
+        Topbar       = {
+            Height      = 48,
+            ButtonsType = "Mac",
         },
     })
 
-    -- ── Version Tag ──────────────────────────────────────────────────────
-    pcall(function()
-        Window:CreateTag({
-            text  = "DEV ZAX  ·  v3.2",
-            color = Color3.fromRGB(50, 140, 255),
-        })
-    end)
+    -- ── Tag ───────────────────────────────────────────────────────────────
+    Window:Tag({
+        Title  = "DEV ZAX  ·  v3.2",
+        Icon   = "solar:star-bold",
+        Color  = Color3.fromHex("#1a3a6b"),
+        Border = true,
+    })
 
-    -- ── Boot Toast ───────────────────────────────────────────────────────
-    SectionedToast(Window, "⚡ Exiles Hub Loaded", "Welcome — DEV ZAX Edition")
+    -- ── Boot notification ─────────────────────────────────────────────────
+    Notify(WindUI, "⚡ Exiles Hub Loaded", "Welcome — DEV ZAX Edition", "solar:home-2-bold", 4)
 
     -- ════════════════════════════════════════════════════════════════════
     -- 1.  EGG STEALING
     -- ════════════════════════════════════════════════════════════════════
-    Window:CreateSection({ name = "🥚  Egg Operations" })
-    local StealTab = Window:CreateTab({ name = "Auto Steal" })
+    local StealSection = Window:Section({ Title = "Egg Operations" })
 
-    StealTab:CreateSection({ name = "⚙️  Steal Engine" })
+    local StealTab = StealSection:Tab({
+        Title     = "Auto Steal",
+        Icon      = "solar:egg-bold-duotone",
+        IconColor = Color3.fromHex("#f59e0b"),
+        IconShape = "Square",
+        Border    = true,
+    })
 
-    StealTab:CreateToggle({
-        name        = "Auto Steal",
-        description = "Automatically steal eggs from enemy bases.",
-        flag        = "AutoStealToggle",
-        value       = false,
-        callback    = function(val)
+    StealTab:Section({ Title = "Steal Engine" })
+
+    StealTab:Toggle({
+        Title    = "Auto Steal",
+        Desc     = "Automatically steal eggs from enemy bases.",
+        Flag     = "AutoStealToggle",
+        Value    = false,
+        Callback = function(val)
             HubState.Settings.AutoSteal = val
-            SectionedToast(Window, val and "✅ Auto Steal ON" or "⛔ Auto Steal OFF", "")
+            Notify(WindUI,
+                val and "✅ Auto Steal ON" or "⛔ Auto Steal OFF",
+                "",
+                val and "solar:play-circle-bold" or "solar:stop-circle-bold",
+                2)
         end,
     })
 
-    StealTab:CreateToggle({
-        name        = "Steal Infested Egg",
-        description = "Include infested eggs in the steal queue.",
-        flag        = "StealInfestedToggle",
-        value       = true,
-        callback    = function(val) HubState.Settings.StealInfested = val end,
+    StealTab:Toggle({
+        Title    = "Steal Infested Egg",
+        Desc     = "Include infested eggs in the steal queue.",
+        Flag     = "StealInfestedToggle",
+        Value    = true,
+        Callback = function(val) HubState.Settings.StealInfested = val end,
     })
 
-    StealTab:CreateToggle({
-        name        = "Anti Trap",
-        description = "Detect and avoid egg-trap zones.",
-        flag        = "AntiTrapToggle",
-        value       = true,
-        callback    = function(val) HubState.Settings.AntiTrap = val end,
+    StealTab:Toggle({
+        Title    = "Anti Trap",
+        Desc     = "Detect and avoid egg-trap zones.",
+        Flag     = "AntiTrapToggle",
+        Value    = true,
+        Callback = function(val) HubState.Settings.AntiTrap = val end,
     })
 
-    StealTab:CreateToggle({
-        name     = "Run Animation",
-        flag     = "RunAnimationToggle",
-        value    = true,
-        callback = function(val) HubState.Settings.RunAnimation = val end,
+    StealTab:Toggle({
+        Title    = "Run Animation",
+        Flag     = "RunAnimationToggle",
+        Value    = true,
+        Callback = function(val) HubState.Settings.RunAnimation = val end,
     })
 
-    StealTab:CreateSection({ name = "🎯  Targeting Rules" })
+    StealTab:Section({ Title = "Targeting Rules" })
 
-    StealTab:CreateDropdown({
-        name     = "Target Areas",
-        flag     = "TargetAreasDropdown",
-        options  = { "All Areas", "Enemy Bases", "Center Zone", "Rare Spawns" },
-        value    = "All Areas",
-        callback = function(val) HubState.Settings.TargetAreas = val end,
+    StealTab:Dropdown({
+        Title    = "Target Areas",
+        Flag     = "TargetAreasDropdown",
+        Values   = { "All Areas", "Enemy Bases", "Center Zone", "Rare Spawns" },
+        Value    = "All Areas",
+        Callback = function(val) HubState.Settings.TargetAreas = val end,
     })
 
-    StealTab:CreateDropdown({
-        name     = "Target Egg Tier",
-        flag     = "TargetSpecificEggsDropdown",
-        options  = { "All Eggs", "Legendary & Up", "Epic & Up", "Only Infested" },
-        value    = "All Eggs",
-        callback = function(val) HubState.Settings.TargetSpecificEggs = val end,
+    StealTab:Dropdown({
+        Title    = "Target Egg Tier",
+        Flag     = "TargetSpecificEggsDropdown",
+        Values   = { "All Eggs", "Legendary & Up", "Epic & Up", "Only Infested" },
+        Value    = "All Eggs",
+        Callback = function(val) HubState.Settings.TargetSpecificEggs = val end,
     })
 
-    StealTab:CreateDropdown({
-        name     = "Steal Priority",
-        flag     = "StealPriorityDropdown",
-        options  = { "Highest Rarity", "Nearest Egg", "Infested First" },
-        value    = "Highest Rarity",
-        callback = function(val) HubState.Settings.StealPriority = val end,
+    StealTab:Dropdown({
+        Title    = "Steal Priority",
+        Flag     = "StealPriorityDropdown",
+        Values   = { "Highest Rarity", "Nearest Egg", "Infested First" },
+        Value    = "Highest Rarity",
+        Callback = function(val) HubState.Settings.StealPriority = val end,
     })
 
-    StealTab:CreateSection({ name = "⚡  Speed & Timing" })
+    StealTab:Section({ Title = "Speed & Timing" })
 
-    StealTab:CreateSlider({
-        name      = "Tween Speed",
-        flag      = "TweenSpeedSlider",
-        range     = { 15, 120 },
-        increment = 5,
-        value     = 35,
-        suffix    = " studs/s",
-        callback  = function(val) HubState.Settings.TweenSpeed = val end,
+    StealTab:Slider({
+        Title    = "Tween Speed",
+        Flag     = "TweenSpeedSlider",
+        Step     = 5,
+        Value    = { Min = 15, Max = 120, Default = 35 },
+        Callback = function(val) HubState.Settings.TweenSpeed = val end,
     })
 
-    StealTab:CreateSlider({
-        name      = "Steal Timeout",
-        flag      = "StealTimeoutSlider",
-        range     = { 1, 15 },
-        increment = 1,
-        value     = 5,
-        suffix    = "s",
-        callback  = function(val) HubState.Settings.StealTimeout = val end,
+    StealTab:Slider({
+        Title    = "Steal Timeout",
+        Flag     = "StealTimeoutSlider",
+        Step     = 1,
+        Value    = { Min = 1, Max = 15, Default = 5 },
+        Callback = function(val) HubState.Settings.StealTimeout = val end,
     })
 
-    StealTab:CreateSection({ name = "🏠  Base Placement" })
+    StealTab:Section({ Title = "Base Placement" })
 
-    StealTab:CreateToggle({
-        name     = "Auto Place Egg",
-        flag     = "AutoPlaceEggToggle",
-        value    = true,
-        callback = function(val) HubState.Settings.AutoPlaceEgg = val end,
+    StealTab:Toggle({
+        Title    = "Auto Place Egg",
+        Flag     = "AutoPlaceEggToggle",
+        Value    = true,
+        Callback = function(val) HubState.Settings.AutoPlaceEgg = val end,
     })
 
-    StealTab:CreateToggle({
-        name        = "Skip Infested Placement",
-        description = "Don't place infested eggs back on your base.",
-        flag        = "DontPlaceInfestedToggle",
-        value       = true,
-        callback    = function(val) HubState.Settings.DontPlaceInfested = val end,
+    StealTab:Toggle({
+        Title    = "Skip Infested Placement",
+        Desc     = "Don't place infested eggs back on your base.",
+        Flag     = "DontPlaceInfestedToggle",
+        Value    = true,
+        Callback = function(val) HubState.Settings.DontPlaceInfested = val end,
     })
 
     -- ════════════════════════════════════════════════════════════════════
     -- 2.  TREADMILL & BASE UPGRADES
     -- ════════════════════════════════════════════════════════════════════
-    Window:CreateSection({ name = "🏋️  Treadmill & Base" })
-    local TreadmillTab = Window:CreateTab({ name = "Treadmill & Base" })
+    local TreadSection = Window:Section({ Title = "Treadmill & Base" })
 
-    TreadmillTab:CreateSection({ name = "🏃  Speed Farming" })
+    local TreadmillTab = TreadSection:Tab({
+        Title     = "Treadmill & Base",
+        Icon      = "solar:running-round-bold-duotone",
+        IconColor = Color3.fromHex("#22c55e"),
+        IconShape = "Square",
+        Border    = true,
+    })
 
-    TreadmillTab:CreateToggle({
-        name        = "Auto Treadmill",
-        description = "Automatically run on treadmills for speed boosts.",
-        flag        = "AutoTreadmillToggle",
-        value       = false,
-        callback    = function(val)
+    TreadmillTab:Section({ Title = "Speed Farming" })
+
+    TreadmillTab:Toggle({
+        Title    = "Auto Treadmill",
+        Desc     = "Automatically run on treadmills for speed boosts.",
+        Flag     = "AutoTreadmillToggle",
+        Value    = false,
+        Callback = function(val)
             HubState.Settings.AutoTreadmill = val
-            SectionedToast(Window, val and "✅ Treadmill ON" or "⛔ Treadmill OFF", "")
+            Notify(WindUI,
+                val and "✅ Treadmill ON" or "⛔ Treadmill OFF", "",
+                "solar:running-round-bold", 2)
         end,
     })
 
-    TreadmillTab:CreateToggle({
-        name     = "Hide Treadmill",
-        flag     = "HideTreadmillToggle",
-        value    = false,
-        callback = function(val)
+    TreadmillTab:Toggle({
+        Title    = "Hide Treadmill",
+        Flag     = "HideTreadmillToggle",
+        Value    = false,
+        Callback = function(val)
             HubState.Settings.HideTreadmill = val
             Modules.Treadmill.SetHideTreadmill(val)
         end,
     })
 
-    TreadmillTab:CreateButton({
-        name     = "⏹  Exit Treadmill Now",
-        callback = function()
+    TreadmillTab:Button({
+        Title    = "Exit Treadmill Now",
+        Icon     = "solar:logout-2-bold",
+        Callback = function()
             HubState.Settings.AutoTreadmill = false
             Modules.Treadmill.Exit(Helpers)
-            SectionedToast(Window, "Treadmill Exited", "Auto-Treadmill disabled.")
+            Notify(WindUI, "Treadmill Exited", "Auto-Treadmill disabled.", "solar:logout-2-bold", 2)
         end,
     })
 
-    TreadmillTab:CreateSection({ name = "📈  Upgrades" })
+    TreadmillTab:Section({ Title = "Upgrades" })
 
-    TreadmillTab:CreateToggle({
-        name     = "Auto Upgrade Treadmill",
-        flag     = "AutoUpgradeTreadmillToggle",
-        value    = false,
-        callback = function(val) HubState.Settings.AutoUpgradeTreadmill = val end,
+    TreadmillTab:Toggle({
+        Title    = "Auto Upgrade Treadmill",
+        Flag     = "AutoUpgradeTreadmillToggle",
+        Value    = false,
+        Callback = function(val) HubState.Settings.AutoUpgradeTreadmill = val end,
     })
 
-    TreadmillTab:CreateToggle({
-        name     = "Auto Upgrade Base",
-        flag     = "AutoUpgradeBaseToggle",
-        value    = false,
-        callback = function(val) HubState.Settings.AutoUpgradeBase = val end,
+    TreadmillTab:Toggle({
+        Title    = "Auto Upgrade Base",
+        Flag     = "AutoUpgradeBaseToggle",
+        Value    = false,
+        Callback = function(val) HubState.Settings.AutoUpgradeBase = val end,
     })
 
-    TreadmillTab:CreateToggle({
-        name     = "Auto Buy Trail",
-        flag     = "AutoBuyTrailToggle",
-        value    = false,
-        callback = function(val) HubState.Settings.AutoBuyTrail = val end,
+    TreadmillTab:Toggle({
+        Title    = "Auto Buy Trail",
+        Flag     = "AutoBuyTrailToggle",
+        Value    = false,
+        Callback = function(val) HubState.Settings.AutoBuyTrail = val end,
     })
 
-    TreadmillTab:CreateToggle({
-        name     = "Auto Claim",
-        flag     = "AutoClaimToggle",
-        value    = false,
-        callback = function(val) HubState.Settings.AutoClaim = val end,
+    TreadmillTab:Toggle({
+        Title    = "Auto Claim",
+        Flag     = "AutoClaimToggle",
+        Value    = false,
+        Callback = function(val) HubState.Settings.AutoClaim = val end,
     })
 
     -- ════════════════════════════════════════════════════════════════════
     -- 3.  HUNGRY MONSTER
     -- ════════════════════════════════════════════════════════════════════
-    Window:CreateSection({ name = "👾  Monster" })
-    local MonsterTab = Window:CreateTab({ name = "Hungry Monster" })
+    local MonsterSection = Window:Section({ Title = "Monster" })
 
-    MonsterTab:CreateSection({ name = "🍖  Monster Feeding" })
+    local MonsterTab = MonsterSection:Tab({
+        Title     = "Hungry Monster",
+        Icon      = "solar:ghost-bold-duotone",
+        IconColor = Color3.fromHex("#a855f7"),
+        IconShape = "Square",
+        Border    = true,
+    })
 
-    MonsterTab:CreateToggle({
-        name        = "Auto Feed Monster",
-        description = "Feed the Hungry Monster automatically.",
-        flag        = "AutoFeedMonsterToggle",
-        value       = false,
-        callback    = function(val)
+    MonsterTab:Section({ Title = "Monster Feeding" })
+
+    MonsterTab:Toggle({
+        Title    = "Auto Feed Monster",
+        Desc     = "Feed the Hungry Monster automatically.",
+        Flag     = "AutoFeedMonsterToggle",
+        Value    = false,
+        Callback = function(val)
             HubState.Settings.AutoFeedMonster = val
-            SectionedToast(Window, val and "✅ Feed Monster ON" or "⛔ Feed Monster OFF", "")
+            Notify(WindUI,
+                val and "✅ Feed Monster ON" or "⛔ Feed Monster OFF", "",
+                "solar:ghost-bold", 2)
         end,
     })
 
-    MonsterTab:CreateDropdown({
-        name     = "Feed Max Rarity",
-        flag     = "FeedMaxRarityDropdown",
-        options  = { "Common", "Rare", "Epic", "Legendary" },
-        value    = "Rare",
-        callback = function(val) HubState.Settings.FeedMaxRarity = val end,
+    MonsterTab:Dropdown({
+        Title    = "Feed Max Rarity",
+        Flag     = "FeedMaxRarityDropdown",
+        Values   = { "Common", "Rare", "Epic", "Legendary" },
+        Value    = "Rare",
+        Callback = function(val) HubState.Settings.FeedMaxRarity = val end,
     })
 
-    MonsterTab:CreateToggle({
-        name     = "Auto Claim Monster Chest",
-        flag     = "AutoClaimMonsterChestToggle",
-        value    = false,
-        callback = function(val) HubState.Settings.AutoClaimChest = val end,
+    MonsterTab:Toggle({
+        Title    = "Auto Claim Monster Chest",
+        Flag     = "AutoClaimMonsterChestToggle",
+        Value    = false,
+        Callback = function(val) HubState.Settings.AutoClaimChest = val end,
     })
 
     -- ════════════════════════════════════════════════════════════════════
     -- 4.  HATCH & PREDICTOR
     -- ════════════════════════════════════════════════════════════════════
-    Window:CreateSection({ name = "🐣  Pets & Hatching" })
-    local HatchTab = Window:CreateTab({ name = "Hatch & Predictor" })
+    local PetsSection = Window:Section({ Title = "Pets & Hatching" })
 
-    HatchTab:CreateSection({ name = "🥚  Egg Opener" })
+    local HatchTab = PetsSection:Tab({
+        Title     = "Hatch & Predictor",
+        Icon      = "solar:bird-bold-duotone",
+        IconColor = Color3.fromHex("#f97316"),
+        IconShape = "Square",
+        Border    = true,
+    })
 
-    HatchTab:CreateDropdown({
-        name     = "Egg Scope",
-        flag     = "EggScopeDropdown",
-        options  = {
+    HatchTab:Section({ Title = "Egg Opener" })
+
+    HatchTab:Dropdown({
+        Title    = "Egg Scope",
+        Flag     = "EggScopeDropdown",
+        Values   = {
             "Basic Egg", "Rare Egg", "Epic Egg",
             "Legendary Egg", "Mythic Egg", "Infested Egg", "Void Egg",
         },
-        value    = "Basic Egg",
-        callback = function(val) HubState.Settings.EggScope = val end,
+        Value    = "Basic Egg",
+        Callback = function(val) HubState.Settings.EggScope = val end,
     })
 
-    HatchTab:CreateToggle({
-        name        = "Auto Hatch",
-        description = "Continuously hatch the selected egg type.",
-        flag        = "AutoHatchToggle",
-        value       = false,
-        callback    = function(val)
+    HatchTab:Toggle({
+        Title    = "Auto Hatch",
+        Desc     = "Continuously hatch the selected egg type.",
+        Flag     = "AutoHatchToggle",
+        Value    = false,
+        Callback = function(val)
             HubState.Settings.AutoHatch = val
-            SectionedToast(Window, val and "✅ Auto Hatch ON" or "⛔ Auto Hatch OFF", HubState.Settings.EggScope)
+            Notify(WindUI,
+                val and "✅ Auto Hatch ON" or "⛔ Auto Hatch OFF",
+                HubState.Settings.EggScope,
+                "solar:bird-bold", 2)
         end,
     })
 
-    HatchTab:CreateSection({ name = "🔮  Predictors" })
+    HatchTab:Section({ Title = "Predictors" })
 
-    HatchTab:CreateButton({
-        name     = "🔮  Pet Predictor",
-        callback = function()
+    HatchTab:Button({
+        Title    = "Pet Predictor",
+        Icon     = "solar:magic-stick-3-bold",
+        Callback = function()
             local p = Modules.Pets.Predict(HubState.Settings.EggScope)
-            AnimatedNotify(Window,
-                "🔮 Pet Predictor",
-                "Next from " .. HubState.Settings.EggScope .. ":\n▶ " .. p,
-                5)
+            Notify(WindUI,
+                "Pet Predictor",
+                "Next from " .. HubState.Settings.EggScope .. ": " .. p,
+                "solar:magic-stick-3-bold", 5)
         end,
     })
 
-    HatchTab:CreateButton({
-        name     = "📋  All Eggs Predictor",
-        callback = function()
-            AnimatedNotify(Window,
-                "📋 All Eggs Predictor",
-                "Basic: Rare Dog\nEpic: Legendary Dragon\nVoid: Mythic Reaper",
-                6)
+    HatchTab:Button({
+        Title    = "All Eggs Predictor",
+        Icon     = "solar:list-bold",
+        Callback = function()
+            Notify(WindUI,
+                "All Eggs Predictor",
+                "Basic: Rare Dog  |  Epic: Legendary Dragon  |  Void: Mythic Reaper",
+                "solar:list-bold", 6)
         end,
     })
 
-    HatchTab:CreateButton({
-        name     = "⚗️  Fuse Predictor",
-        callback = function()
-            AnimatedNotify(Window,
-                "⚗️ Fuse Predictor",
-                "Predicted: Rainbow Shiny Dragon\n▶ Success Rate: 95%",
-                5)
+    HatchTab:Button({
+        Title    = "Fuse Predictor",
+        Icon     = "solar:test-tube-bold",
+        Callback = function()
+            Notify(WindUI,
+                "Fuse Predictor",
+                "Predicted: Rainbow Shiny Dragon — 95% Success Rate",
+                "solar:test-tube-bold", 5)
         end,
     })
 
-    HatchTab:CreateButton({
-        name     = "🔄  Refresh Fuse Predictor",
-        callback = function()
-            SectionedToast(Window, "🔄 Fuse Predictor", "Seed refreshed successfully.")
+    HatchTab:Button({
+        Title    = "Refresh Fuse Predictor",
+        Icon     = "solar:refresh-bold",
+        Callback = function()
+            Notify(WindUI, "Fuse Predictor", "Seed refreshed successfully.", "solar:refresh-bold", 2)
         end,
     })
 
     -- ════════════════════════════════════════════════════════════════════
     -- 5.  PET MANAGEMENT
     -- ════════════════════════════════════════════════════════════════════
-    local PetTab = Window:CreateTab({ name = "Pet Management" })
-
-    PetTab:CreateSection({ name = "⭐  Equip & Favorites" })
-
-    PetTab:CreateToggle({
-        name     = "Auto Equip Best",
-        flag     = "AutoEquipBestToggle",
-        value    = false,
-        callback = function(val) HubState.Settings.AutoEquipBest = val end,
+    local PetTab = PetsSection:Tab({
+        Title     = "Pet Management",
+        Icon      = "solar:star-bold-duotone",
+        IconColor = Color3.fromHex("#eab308"),
+        IconShape = "Square",
+        Border    = true,
     })
 
-    PetTab:CreateToggle({
-        name     = "Auto Favorite Pet",
-        flag     = "AutoFavoritePetToggle",
-        value    = false,
-        callback = function(val) HubState.Settings.AutoFavoritePet = val end,
+    PetTab:Section({ Title = "Equip & Favorites" })
+
+    PetTab:Toggle({
+        Title    = "Auto Equip Best",
+        Flag     = "AutoEquipBestToggle",
+        Value    = false,
+        Callback = function(val) HubState.Settings.AutoEquipBest = val end,
     })
 
-    PetTab:CreateDropdown({
-        name     = "Favorite Min Rarity",
-        flag     = "FavoriteMinRarityDropdown",
-        options  = { "Rare", "Epic", "Legendary", "Mythic" },
-        value    = "Legendary",
-        callback = function(val) HubState.Settings.FavoriteMinRarity = val end,
+    PetTab:Toggle({
+        Title    = "Auto Favorite Pet",
+        Flag     = "AutoFavoritePetToggle",
+        Value    = false,
+        Callback = function(val) HubState.Settings.AutoFavoritePet = val end,
     })
 
-    PetTab:CreateToggle({
-        name     = "Favorite Mutations",
-        flag     = "FavoriteMutationToggle",
-        value    = true,
-        callback = function(val) HubState.Settings.FavoriteMutation = val end,
+    PetTab:Dropdown({
+        Title    = "Favorite Min Rarity",
+        Flag     = "FavoriteMinRarityDropdown",
+        Values   = { "Rare", "Epic", "Legendary", "Mythic" },
+        Value    = "Legendary",
+        Callback = function(val) HubState.Settings.FavoriteMinRarity = val end,
     })
 
-    PetTab:CreateButton({
-        name     = "⭐  Favorite Pets Now",
-        callback = function()
+    PetTab:Toggle({
+        Title    = "Favorite Mutations",
+        Flag     = "FavoriteMutationToggle",
+        Value    = true,
+        Callback = function(val) HubState.Settings.FavoriteMutation = val end,
+    })
+
+    PetTab:Button({
+        Title    = "Favorite Pets Now",
+        Icon     = "solar:star-bold",
+        Color    = Color3.fromHex("#1d4ed8"),
+        Callback = function()
             Helpers.FireRemoteByKeywords({"favorite", "lockpet"})
-            SectionedToast(Window, "⭐ Favorites Updated", "All qualifying pets marked.")
+            Notify(WindUI, "Favorites Updated", "All qualifying pets marked.", "solar:star-bold", 3)
         end,
     })
 
-    PetTab:CreateSection({ name = "💰  Auto Sell Pets" })
+    PetTab:Section({ Title = "Auto Sell Pets" })
 
-    PetTab:CreateToggle({
-        name        = "Auto Sell Pet",
-        description = "Sell pets that match the sell rule below.",
-        flag        = "AutoSellPetToggle",
-        value       = false,
-        callback    = function(val)
+    PetTab:Toggle({
+        Title    = "Auto Sell Pet",
+        Desc     = "Sell pets that match the sell rule below.",
+        Flag     = "AutoSellPetToggle",
+        Value    = false,
+        Callback = function(val)
             HubState.Settings.AutoSellPet = val
-            SectionedToast(Window, val and "✅ Auto Sell Pets ON" or "⛔ Auto Sell Pets OFF", "")
+            Notify(WindUI,
+                val and "✅ Auto Sell Pets ON" or "⛔ Auto Sell Pets OFF", "",
+                "solar:tag-bold", 2)
         end,
     })
 
-    PetTab:CreateDropdown({
-        name     = "Sell Pet Rule",
-        flag     = "SellPetRuleDropdown",
-        options  = { "Rarity Below", "Income Below", "Duplicates Only" },
-        value    = "Rarity Below",
-        callback = function(val) HubState.Settings.SellPetRule = val end,
+    PetTab:Dropdown({
+        Title    = "Sell Pet Rule",
+        Flag     = "SellPetRuleDropdown",
+        Values   = { "Rarity Below", "Income Below", "Duplicates Only" },
+        Value    = "Rarity Below",
+        Callback = function(val) HubState.Settings.SellPetRule = val end,
     })
 
-    PetTab:CreateDropdown({
-        name     = "Sell Below Rarity",
-        flag     = "PetMaxRarityDropdown",
-        options  = { "Common", "Rare", "Epic", "Legendary" },
-        value    = "Rare",
-        callback = function(val) HubState.Settings.PetMaxRarity = val end,
+    PetTab:Dropdown({
+        Title    = "Sell Below Rarity",
+        Flag     = "PetMaxRarityDropdown",
+        Values   = { "Common", "Rare", "Epic", "Legendary" },
+        Value    = "Rare",
+        Callback = function(val) HubState.Settings.PetMaxRarity = val end,
     })
 
-    PetTab:CreateSlider({
-        name      = "Income Threshold",
-        flag      = "PetIncomeThresholdSlider",
-        range     = { 10, 5000 },
-        increment = 50,
-        value     = 100,
-        suffix    = " coins/s",
-        callback  = function(val) HubState.Settings.PetIncomeThreshold = val end,
+    PetTab:Slider({
+        Title    = "Income Threshold",
+        Flag     = "PetIncomeThresholdSlider",
+        Step     = 50,
+        Value    = { Min = 10, Max = 5000, Default = 100 },
+        Callback = function(val) HubState.Settings.PetIncomeThreshold = val end,
     })
 
-    PetTab:CreateDropdown({
-        name     = "Blacklist Sell",
-        flag     = "BlacklistSellPetsDropdown",
-        options  = { "None", "Favorites Only", "Mutations Only" },
-        value    = "Favorites Only",
-        callback = function(val) HubState.Settings.BlacklistSellPets = val end,
+    PetTab:Dropdown({
+        Title    = "Blacklist Sell",
+        Flag     = "BlacklistSellPetsDropdown",
+        Values   = { "None", "Favorites Only", "Mutations Only" },
+        Value    = "Favorites Only",
+        Callback = function(val) HubState.Settings.BlacklistSellPets = val end,
     })
 
-    PetTab:CreateButton({
-        name     = "💰  Sell Pets Now",
-        callback = function()
+    PetTab:Button({
+        Title    = "Sell Pets Now",
+        Icon     = "solar:tag-bold",
+        Color    = Color3.fromHex("#dc2626"),
+        Callback = function()
             Helpers.FireRemoteByKeywords({"sellpet", "sellpets"})
-            SectionedToast(Window, "💰 Pets Sold", "Matching pets have been sold.")
+            Notify(WindUI, "Pets Sold", "Matching pets have been sold.", "solar:tag-bold", 3)
         end,
     })
 
-    PetTab:CreateSection({ name = "🗃️  Inventory Tools" })
+    PetTab:Section({ Title = "Inventory Tools" })
 
-    PetTab:CreateDropdown({
-        name     = "Sort Pets By",
-        flag     = "SortPetsByDropdown",
-        options  = { "Rarity", "Income", "Mutation", "Level" },
-        value    = "Rarity",
-        callback = function(val) HubState.Settings.SortPetsBy = val end,
+    PetTab:Dropdown({
+        Title    = "Sort Pets By",
+        Flag     = "SortPetsByDropdown",
+        Values   = { "Rarity", "Income", "Mutation", "Level" },
+        Value    = "Rarity",
+        Callback = function(val) HubState.Settings.SortPetsBy = val end,
     })
 
-    PetTab:CreateButton({
-        name     = "🔄  Refresh Inventory",
-        callback = function()
+    PetTab:Button({
+        Title    = "Refresh Inventory",
+        Icon     = "solar:refresh-bold",
+        Callback = function()
             Helpers.FireRemoteByKeywords({"refreshpets", "getpets"})
-            SectionedToast(Window, "🔄 Inventory Refreshed", "Pet list updated.")
+            Notify(WindUI, "Inventory Refreshed", "Pet list updated.", "solar:refresh-bold", 2)
         end,
     })
 
     -- ════════════════════════════════════════════════════════════════════
     -- 6.  EGG ECONOMY
     -- ════════════════════════════════════════════════════════════════════
-    local EggSellTab = Window:CreateTab({ name = "Egg Economy" })
+    local EggSellTab = PetsSection:Tab({
+        Title     = "Egg Economy",
+        Icon      = "solar:shop-bold-duotone",
+        IconColor = Color3.fromHex("#10b981"),
+        IconShape = "Square",
+        Border    = true,
+    })
 
-    EggSellTab:CreateSection({ name = "💸  Egg Selling" })
+    EggSellTab:Section({ Title = "Egg Selling" })
 
-    EggSellTab:CreateToggle({
-        name        = "Auto Sell Egg",
-        description = "Automatically sell eggs below the set rarity.",
-        flag        = "AutoSellEggToggle",
-        value       = false,
-        callback    = function(val)
+    EggSellTab:Toggle({
+        Title    = "Auto Sell Egg",
+        Desc     = "Automatically sell eggs below the set rarity.",
+        Flag     = "AutoSellEggToggle",
+        Value    = false,
+        Callback = function(val)
             HubState.Settings.AutoSellEgg = val
-            SectionedToast(Window, val and "✅ Auto Sell Egg ON" or "⛔ Auto Sell Egg OFF", "")
+            Notify(WindUI,
+                val and "✅ Auto Sell Egg ON" or "⛔ Auto Sell Egg OFF", "",
+                "solar:shop-bold", 2)
         end,
     })
 
-    EggSellTab:CreateDropdown({
-        name     = "Sell Below Rarity",
-        flag     = "EggMaxRarityDropdown",
-        options  = { "Common", "Rare", "Epic" },
-        value    = "Common",
-        callback = function(val) HubState.Settings.EggMaxRarity = val end,
+    EggSellTab:Dropdown({
+        Title    = "Sell Below Rarity",
+        Flag     = "EggMaxRarityDropdown",
+        Values   = { "Common", "Rare", "Epic" },
+        Value    = "Common",
+        Callback = function(val) HubState.Settings.EggMaxRarity = val end,
     })
 
-    EggSellTab:CreateButton({
-        name     = "💸  Sell Eggs Now",
-        callback = function()
+    EggSellTab:Button({
+        Title    = "Sell Eggs Now",
+        Icon     = "solar:shop-bold",
+        Color    = Color3.fromHex("#059669"),
+        Callback = function()
             Helpers.FireRemoteByKeywords({"sellegg", "selleggs"})
-            SectionedToast(Window, "💸 Eggs Sold", "Matching eggs have been sold.")
+            Notify(WindUI, "Eggs Sold", "Matching eggs have been sold.", "solar:shop-bold", 3)
         end,
     })
 
     -- ════════════════════════════════════════════════════════════════════
     -- 7.  VISUALS (ESP)
     -- ════════════════════════════════════════════════════════════════════
-    Window:CreateSection({ name = "👁️  Player & Visuals" })
-    local VisualsTab = Window:CreateTab({ name = "Visuals (ESP)" })
+    local VisualsSection = Window:Section({ Title = "Player & Visuals" })
 
-    VisualsTab:CreateSection({ name = "🔴  ESP Chams" })
+    local VisualsTab = VisualsSection:Tab({
+        Title     = "Visuals (ESP)",
+        Icon      = "solar:eye-bold-duotone",
+        IconColor = Color3.fromHex("#ec4899"),
+        IconShape = "Square",
+        Border    = true,
+    })
 
-    VisualsTab:CreateToggle({
-        name        = "ESP Eggs",
-        description = "Highlight eggs — Red = Regular, Green = Infested.",
-        flag        = "ESPEggsToggle",
-        value       = false,
-        callback    = function(val)
+    VisualsTab:Section({ Title = "ESP Chams" })
+
+    VisualsTab:Toggle({
+        Title    = "ESP Eggs",
+        Desc     = "Highlight eggs — Red = Regular, Green = Infested.",
+        Flag     = "ESPEggsToggle",
+        Value    = false,
+        Callback = function(val)
             Modules.Visuals.SetEggESP(val, HubState)
-            SectionedToast(Window, val and "✅ Egg ESP ON" or "⛔ Egg ESP OFF", "")
+            Notify(WindUI,
+                val and "✅ Egg ESP ON" or "⛔ Egg ESP OFF", "",
+                "solar:eye-bold", 2)
         end,
     })
 
-    VisualsTab:CreateToggle({
-        name        = "ESP Players",
-        description = "Draw red box chams on other players.",
-        flag        = "ESPPlayersToggle",
-        value       = false,
-        callback    = function(val)
+    VisualsTab:Toggle({
+        Title    = "ESP Players",
+        Desc     = "Draw red box chams on other players.",
+        Flag     = "ESPPlayersToggle",
+        Value    = false,
+        Callback = function(val)
             Modules.Visuals.SetPlayerESP(val, HubState)
-            SectionedToast(Window, val and "✅ Player ESP ON" or "⛔ Player ESP OFF", "")
+            Notify(WindUI,
+                val and "✅ Player ESP ON" or "⛔ Player ESP OFF", "",
+                "solar:users-group-two-rounded-bold", 2)
         end,
     })
 
     -- ════════════════════════════════════════════════════════════════════
     -- 8.  LOCAL PLAYER
     -- ════════════════════════════════════════════════════════════════════
-    local PlayerTab = Window:CreateTab({ name = "Local Player" })
+    local PlayerTab = VisualsSection:Tab({
+        Title     = "Local Player",
+        Icon      = "solar:running-round-bold-duotone",
+        IconColor = Color3.fromHex("#6366f1"),
+        IconShape = "Square",
+        Border    = true,
+    })
 
-    PlayerTab:CreateSection({ name = "💨  Speed & Movement" })
+    PlayerTab:Section({ Title = "Speed & Movement" })
 
-    local WalkSpeedSlider = PlayerTab:CreateSlider({
-        name      = "WalkSpeed",
-        flag      = "PlayerWalkSpeed",
-        range     = { 16, 350 },
-        increment = 1,
-        value     = 16,
-        suffix    = " studs/s",
-        callback  = function(val)
+    local WalkSpeedSlider = PlayerTab:Slider({
+        Title    = "WalkSpeed",
+        Flag     = "PlayerWalkSpeed",
+        Step     = 1,
+        Value    = { Min = 16, Max = 350, Default = 16 },
+        Callback = function(val)
             HubState.Settings.WalkSpeed = val
             Modules.Player.SetWalkSpeed(val, Helpers)
         end,
     })
 
-    PlayerTab:CreateToggle({
-        name        = "CFrame Speed Hack",
-        description = "Bypass anti-cheat speed resets smoothly.",
-        flag        = "CFrameSpeedToggle",
-        value       = false,
-        callback    = function(val) HubState.Settings.CFrameSpeed = val end,
+    PlayerTab:Toggle({
+        Title    = "CFrame Speed Hack",
+        Desc     = "Bypass anti-cheat speed resets smoothly.",
+        Flag     = "CFrameSpeedToggle",
+        Value    = false,
+        Callback = function(val) HubState.Settings.CFrameSpeed = val end,
     })
 
-    PlayerTab:CreateSlider({
-        name      = "CFrame Speed Multiplier",
-        flag      = "CFrameSpeedMultiplier",
-        range     = { 1, 10 },
-        increment = 0.5,
-        value     = 2,
-        suffix    = "x",
-        callback  = function(val) HubState.Settings.CFrameSpeedMultiplier = val end,
+    PlayerTab:Slider({
+        Title    = "CFrame Multiplier",
+        Flag     = "CFrameSpeedMultiplier",
+        Step     = 0.5,
+        Value    = { Min = 1, Max = 10, Default = 2 },
+        Callback = function(val) HubState.Settings.CFrameSpeedMultiplier = val end,
     })
 
-    PlayerTab:CreateSection({ name = "🚀  Speed Presets" })
+    PlayerTab:Section({ Title = "Speed Presets" })
 
-    PlayerTab:CreateButton({
-        name     = "🐢  Normal  (16)",
-        callback = function()
-            WalkSpeedSlider:Set(16)
-            SectionedToast(Window, "Speed → Normal", "WalkSpeed set to 16.")
-        end,
+    local SpeedGroup = PlayerTab:Group()
+    SpeedGroup:Button({
+        Title    = "Normal",
+        Desc     = "16 studs/s",
+        Icon     = "solar:walk-bold",
+        Callback = function() WalkSpeedSlider:Set(16) end,
     })
-    PlayerTab:CreateButton({
-        name     = "🏃  Fast    (50)",
-        callback = function()
-            WalkSpeedSlider:Set(50)
-            SectionedToast(Window, "Speed → Fast", "WalkSpeed set to 50.")
-        end,
-    })
-    PlayerTab:CreateButton({
-        name     = "⚡  Flash   (150)",
-        callback = function()
-            WalkSpeedSlider:Set(150)
-            SectionedToast(Window, "Speed → Flash", "WalkSpeed set to 150.")
-        end,
-    })
-    PlayerTab:CreateButton({
-        name     = "🌩️  God     (300)",
-        callback = function()
-            WalkSpeedSlider:Set(300)
-            SectionedToast(Window, "Speed → God Mode", "WalkSpeed set to 300.")
-        end,
+    SpeedGroup:Space()
+    SpeedGroup:Button({
+        Title    = "Fast",
+        Desc     = "50 studs/s",
+        Icon     = "solar:running-2-bold",
+        Callback = function() WalkSpeedSlider:Set(50) end,
     })
 
-    PlayerTab:CreateSection({ name = "🦾  Abilities" })
+    local SpeedGroup2 = PlayerTab:Group()
+    SpeedGroup2:Button({
+        Title    = "Flash",
+        Desc     = "150 studs/s",
+        Icon     = "solar:bolt-bold",
+        Color    = Color3.fromHex("#1d4ed8"),
+        Callback = function() WalkSpeedSlider:Set(150) end,
+    })
+    SpeedGroup2:Space()
+    SpeedGroup2:Button({
+        Title    = "God",
+        Desc     = "300 studs/s",
+        Icon     = "solar:bolt-bold",
+        Color    = Color3.fromHex("#7c3aed"),
+        Callback = function() WalkSpeedSlider:Set(300) end,
+    })
 
-    PlayerTab:CreateToggle({
-        name        = "Infinite Jump",
-        description = "Jump unlimited times in the air.",
-        flag        = "InfJumpToggle",
-        value       = false,
-        callback    = function(val)
+    PlayerTab:Section({ Title = "Abilities" })
+
+    PlayerTab:Toggle({
+        Title    = "Infinite Jump",
+        Desc     = "Jump unlimited times in the air.",
+        Flag     = "InfJumpToggle",
+        Value    = false,
+        Callback = function(val)
             HubState.Settings.InfJump = val
-            SectionedToast(Window, val and "✅ Infinite Jump ON" or "⛔ Infinite Jump OFF", "")
+            Notify(WindUI,
+                val and "✅ Infinite Jump ON" or "⛔ Infinite Jump OFF", "",
+                "solar:bolt-bold", 2)
         end,
     })
 
-    PlayerTab:CreateToggle({
-        name        = "Noclip",
-        description = "Phase through walls and objects.",
-        flag        = "NoclipToggle",
-        value       = false,
-        callback    = function(val)
+    PlayerTab:Toggle({
+        Title    = "Noclip",
+        Desc     = "Phase through walls and objects.",
+        Flag     = "NoclipToggle",
+        Value    = false,
+        Callback = function(val)
             HubState.Settings.Noclip = val
-            SectionedToast(Window, val and "✅ Noclip ON" or "⛔ Noclip OFF", "")
+            Notify(WindUI,
+                val and "✅ Noclip ON" or "⛔ Noclip OFF", "",
+                "solar:ghost-bold", 2)
         end,
     })
 
     -- ════════════════════════════════════════════════════════════════════
     -- 9.  SETTINGS
     -- ════════════════════════════════════════════════════════════════════
-    Window:CreateSection({ name = "⚙️  System" })
-    local SettingsTab = Window:CreateTab({ name = "Settings" })
+    local SystemSection = Window:Section({ Title = "System" })
 
-    SettingsTab:CreateSection({ name = "🎨  Theme & Keybind" })
+    local SettingsTab = SystemSection:Tab({
+        Title     = "Settings",
+        Icon      = "solar:settings-bold-duotone",
+        IconColor = Color3.fromHex("#94a3b8"),
+        IconShape = "Square",
+        Border    = true,
+    })
 
-    SettingsTab:CreateDropdown({
-        name     = "UI Theme",
-        flag     = "WindowThemeDropdown",
-        options  = { "cobalt", "ember", "amethyst", "frost", "rose", "default" },
-        value    = "cobalt",
-        callback = function(selected)
-            Window:ChangeTheme(selected)
-            SectionedToast(Window, "🎨 Theme Changed", "Now using: " .. selected)
+    SettingsTab:Section({ Title = "Theme & Keybind" })
+
+    -- Dynamic theme picker from WindUI's theme list
+    SettingsTab:Dropdown({
+        Title    = "UI Theme",
+        Flag     = "WindowThemeDropdown",
+        Values   = (function()
+            local names = {}
+            for name in pairs(WindUI:GetThemes()) do
+                table.insert(names, name)
+            end
+            table.sort(names)
+            return names
+        end)(),
+        Value    = WindUI:GetCurrentTheme(),
+        Callback = function(selected)
+            WindUI:SetTheme(selected)
+            Notify(WindUI, "Theme Changed", "Now using: " .. selected, "solar:palette-bold", 3)
         end,
     })
 
-    SettingsTab:CreateKeybind({
-        name     = "Toggle Window",
-        flag     = "ToggleWindowKeybind",
-        value    = Enum.KeyCode.RightControl,
-        callback = function() Window:ToggleHide() end,
-    })
-
-    SettingsTab:CreateSection({ name = "💾  Session" })
-
-    SettingsTab:CreateButton({
-        name     = "💾  Save Config",
-        callback = function()
-            Window:Save()
-            SectionedToast(Window, "💾 Config Saved", "Settings written to disk.")
+    SettingsTab:Keybind({
+        Title    = "Toggle Window",
+        Desc     = "Key to open/close the hub.",
+        Flag     = "ToggleWindowKeybind",
+        Value    = "RightControl",
+        Callback = function(v)
+            Window:SetToggleKey(Enum.KeyCode[v])
         end,
     })
 
-    SettingsTab:CreateButton({
-        name     = "ℹ️  About Exiles Hub",
-        callback = function()
-            AnimatedNotify(Window,
-                "ℹ️ Exiles Hub v3.2",
-                "Developer : DEV ZAX\nGame       : Steal An Egg\nFramework  : Rayfield Gen 2\nRepo       : github.com/mmtandico/ExilesHub",
+    SettingsTab:Section({ Title = "Session" })
+
+    SettingsTab:Button({
+        Title    = "About Exiles Hub",
+        Icon     = "solar:info-square-bold",
+        Callback = function()
+            Notify(WindUI,
+                "Exiles Hub v3.2",
+                "Developer: DEV ZAX\nGame: Steal An Egg\nLibrary: WindUI\nRepo: github.com/mmtandico/ExilesHub",
+                "solar:info-square-bold",
                 7)
         end,
     })
 
-    SettingsTab:CreateButton({
-        name     = "🗑️  Unload Hub",
-        callback = function()
-            HubState.Cleanup()
-            local hum = Helpers.GetHumanoid()
-            if hum then hum.WalkSpeed = 16; hum.JumpPower = 50 end
-            AnimatedNotify(Window, "🗑️ Exiles Hub Unloaded", "Thanks for using — DEV ZAX", 4)
-            Window:Unload()
+    SettingsTab:Button({
+        Title    = "Unload Hub",
+        Icon     = "solar:logout-3-bold",
+        Color    = Color3.fromHex("#7f1d1d"),
+        Callback = function()
+            Window:Dialog({
+                Title   = "Unload Exiles Hub?",
+                Content = "This will clean up all scripts and destroy the UI.",
+                Buttons = {
+                    { Title = "Cancel",  Variant = "Secondary", Callback = function() end },
+                    { Title = "Unload",  Variant = "Primary",   Callback = function()
+                        HubState.Cleanup()
+                        local hum = Helpers.GetHumanoid()
+                        if hum then hum.WalkSpeed = 16; hum.JumpPower = 50 end
+                        Notify(WindUI, "Exiles Hub Unloaded", "Thanks — DEV ZAX", "solar:logout-3-bold", 4)
+                        task.wait(1)
+                        Window:Destroy()
+                    end },
+                },
+            })
         end,
     })
 
