@@ -6,16 +6,12 @@ Official Documentation: [Sirius Rayfield Gen 2 Docs](https://docs.sirius.menu/ra
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick Start (Official Loadstring)
 
-### 1. Direct Execution in Executor
-Copy and paste the entire contents of [`main.lua`](file:///c:/Users/Windows/OneDrive/Desktop/Exiles/main.lua) directly into your executor (Wave, Synapse Z, Delta, Codex, Fluxus, Arceus X, etc.) and hit **Execute**.
-
-### 2. GitHub Loadstring (Recommended for Distribution)
-If you host your repository on GitHub, players can load your script hub via a single line:
+Copy and execute this single line in any Roblox executor (Delta, Codex, Arceus X, Wave, etc.):
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/<YOUR_USERNAME>/<REPO_NAME>/main/main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/mmtandico/ExilesHub/refs/heads/main/Loader.lua"))()
 ```
 
 ---
