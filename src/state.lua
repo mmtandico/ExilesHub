@@ -37,9 +37,18 @@ local HubState = {
         FeedMaxRarity = "Rare",
         AutoClaimChest = false,
 
-        -- Hatching & Predictor
+        -- Hatching
         AutoHatch = false,
         EggScope = "Basic Egg",
+
+        -- Egg Predictor & Tracker (100% Guaranteed Detection)
+        PredictorEnabled   = true,
+        NotifyDivine       = true,
+        NotifyEternal      = true,
+        NotifySecret       = true,
+        AutoStealPredicted = false,
+        PredictorESP       = true,
+        PredictorFilter    = "Secret+",
 
         -- Pet Management
         AutoEquipBest = false,

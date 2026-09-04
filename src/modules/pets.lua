@@ -1,6 +1,6 @@
 --[[
     ===================================================================
-    EXILES SCRIPT HUB | PETS, HATCHING & PREDICTOR MODULE
+    EXILES SCRIPT HUB | PETS & HATCHING MODULE
     ===================================================================
 ]]
 
@@ -29,11 +29,6 @@ function PetModule.Init(HubState, Helpers)
             task.wait(2.5)
         end
     end)
-end
-
-function PetModule.Predict(eggName)
-    local pets = { "Cat", "Dog", "Bunny", "Golden Dragon", "Mythic Demon", "Void Stalker" }
-    return pets[math.random(1, #pets)]
 end
 
 return PetModule

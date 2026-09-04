@@ -77,6 +77,7 @@ local Modules = {
     Treadmill = Require("modules/treadmill.lua"),
     Monster   = Require("modules/monster.lua"),
     Pets      = Require("modules/pets.lua"),
+    Predictor = Require("modules/egg_predictor.lua"),
     EggSell   = Require("modules/egg_sell.lua"),
     Visuals   = Require("modules/visuals.lua"),
     Player    = Require("modules/player.lua"),
@@ -87,6 +88,7 @@ Modules.Steal.Init(HubState, Helpers)
 Modules.Treadmill.Init(HubState, Helpers)
 Modules.Monster.Init(HubState, Helpers)
 Modules.Pets.Init(HubState, Helpers)
+Modules.Predictor.Init(HubState, Helpers)
 Modules.EggSell.Init(HubState, Helpers)
 Modules.Player.Init(HubState, Helpers)
 
