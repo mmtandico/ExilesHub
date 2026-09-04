@@ -33,38 +33,9 @@ if not loadSuccess or not Rayfield then
     return
 end
 
---[=[ 4. CUSTOM RED & BLACK THEME (Using safe Color3 values) ]=]
-local CrimsonTheme = {
-    WindowColor = Color3.fromRGB(15, 12, 14),
-    ShadowColor = Color3.fromRGB(180, 20, 35),
-    SurfaceStroke = Color3.fromRGB(65, 18, 22),
-
-    TitlingColor = Color3.fromRGB(255, 255, 255),
-    ContentColor = Color3.fromRGB(220, 220, 225),
-    ElementTextHoverColor = Color3.fromRGB(255, 80, 95),
-    ActionColor = Color3.fromRGB(240, 35, 55),
-
-    TabColor = Color3.fromRGB(255, 255, 255),
-    TabBackground = Color3.fromRGB(180, 22, 38),
-    TabStroke = Color3.fromRGB(220, 35, 55),
-
-    ElementGradient = Color3.fromRGB(22, 17, 19),
-    ElementStroke = Color3.fromRGB(55, 16, 20),
-    ElementStrokeHover = Color3.fromRGB(200, 30, 48),
-
-    AccentColor = Color3.fromRGB(220, 25, 45),
-    AccentStroke = Color3.fromRGB(255, 50, 70),
-    AccentGlow = 0.35,
-
-    SliderBackground = Color3.fromRGB(30, 22, 24),
-    SliderProgress = Color3.fromRGB(220, 25, 45),
-    SliderHandle = Color3.fromRGB(255, 255, 255),
-
-    ToggleTrack = Color3.fromRGB(32, 22, 24),
-    ToggleKnobOff = Color3.fromRGB(100, 100, 105),
-    DropdownHighlight = Color3.fromRGB(190, 22, 40),
-    FieldBackground = Color3.fromRGB(24, 18, 20),
-}
+--[=[ 4. NATIVE RED & BLACK THEME: "ember" ]=]
+-- Rayfield Gen 2 built-in themes: "ember" (Red/Black), "cobalt", "amethyst", "frost", "rose", "default"
+local SELECTED_THEME = "ember"
 
 --[=[ 5. HUB STATE MANAGER ]=]
 local HubState = {
@@ -215,7 +186,7 @@ local Window = Rayfield:CreateWindow({
     name = "EXILES SCRIPT HUB",
     subtitle = "Steal An Egg (ID: 107778070777162)",
     sidebarLayout = true,
-    theme = CrimsonTheme,
+    theme = SELECTED_THEME,
     showName = "Exiles Hub",
     configuration = {
         autoSave = true,
@@ -982,14 +953,10 @@ SettingsTab:CreateSection({ name = "Themes & Keybind" })
 SettingsTab:CreateDropdown({
     name = "Window Theme",
     flag = "WindowThemeDropdown",
-    options = { "Crimson (Red/Black)", "ember", "cobalt", "amethyst", "frost", "rose", "default" },
-    value = "Crimson (Red/Black)",
+    options = { "ember", "cobalt", "amethyst", "frost", "rose", "default" },
+    value = "ember",
     callback = function(selected)
-        if selected == "Crimson (Red/Black)" then
-            Window:ChangeTheme(CrimsonTheme)
-        else
-            Window:ChangeTheme(selected)
-        end
+        Window:ChangeTheme(selected)
     end,
 })
 
