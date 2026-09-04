@@ -330,12 +330,12 @@ function UILayout.Build(WindUI, HubState, Helpers, Modules)
     end
 
     -- ── Live Cycle & Tracker Stats ────────────────────────────────────────
-    PredictorTab:Section({ Title = "Global Spawn Tracker" })
+    PredictorTab:Section({ Title = "Global Spawn & Night Clock" })
 
     local cycleGroup1 = PredictorTab:Group()
     local NextSpawnBtn = cycleGroup1:Button({
         Title    = "Next Global Spawn",
-        Desc     = "05:00",
+        Desc     = "05:00 (Syncing...)",
         Icon     = "solar:clock-circle-bold",
         Color    = Color3.fromHex("#18181b"),
         Callback = function() end,
@@ -343,7 +343,7 @@ function UILayout.Build(WindUI, HubState, Helpers, Modules)
     cycleGroup1:Space()
     local NightCycleBtn = cycleGroup1:Button({
         Title    = "Night Cycle (30x Hatch)",
-        Desc     = "04:30",
+        Desc     = "Detecting lighting...",
         Icon     = "solar:moon-bold",
         Color    = Color3.fromHex("#18181b"),
         Callback = function() end,
@@ -351,7 +351,7 @@ function UILayout.Build(WindUI, HubState, Helpers, Modules)
 
     local cycleGroup2 = PredictorTab:Group()
     local StatusScanBtn = cycleGroup2:Button({
-        Title    = "Server Scan Status",
+        Title    = "Server Inventory",
         Desc     = "Scanning 100% of game...",
         Icon     = "solar:radar-bold",
         Color    = Color3.fromHex("#18181b"),
@@ -362,11 +362,38 @@ function UILayout.Build(WindUI, HubState, Helpers, Modules)
     })
     cycleGroup2:Space()
     local RareCountBtn = cycleGroup2:Button({
-        Title    = "Rare Targets Active",
-        Desc     = "0 high-tier eggs",
+        Title    = "High-Tier Targets",
+        Desc     = "0 rare eggs",
         Icon     = "solar:shield-star-bold",
         Color    = Color3.fromHex("#18181b"),
         Callback = function() end,
+    })
+
+    -- ── Timer Sync & Calibration ──────────────────────────────────────────
+    PredictorTab:Section({ Title = "Timer Synchronization & Calibration" })
+
+    local syncGroup = PredictorTab:Group()
+    syncGroup:Button({
+        Title    = "Sync to 05:00",
+        Desc     = "Tap when new eggs spawn to lock timer",
+        Icon     = "solar:restart-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.SyncTimer(300)
+            Notify(WindUI, "Timer Calibrated", "Reset spawn countdown to 05:00.", "solar:check-circle-bold", 3)
+        end,
+    })
+    syncGroup:Space()
+    syncGroup:Button({
+        Title    = "Sync from In-Game HUD",
+        Desc     = "Auto-bind to on-screen game timer",
+        Icon     = "solar:refresh-circle-bold",
+        Color    = Color3.fromHex("#18181b"),
+        Callback = function()
+            Modules.Predictor.ManualOffset = 0
+            Modules.Predictor.LockedToGuiTimer = false
+            Notify(WindUI, "HUD Auto-Sync", "Rescanning on-screen timers.", "solar:refresh-circle-bold", 3)
+        end,
     })
 
     -- ── Target Rarities & Automation ──────────────────────────────────────
@@ -491,22 +518,23 @@ function UILayout.Build(WindUI, HubState, Helpers, Modules)
         while task.wait(1) do
             pcall(function()
                 local cycleInfo = Modules.Predictor.GetUpcomingCycleInfo()
-                NextSpawnBtn:SetDesc(cycleInfo.NextSpawnFormatted)
-                NightCycleBtn:SetDesc(cycleInfo.NextNightFormatted)
+                NextSpawnBtn:SetDesc(string.format("%s (%s)", cycleInfo.NextSpawnFormatted, cycleInfo.TimerSource or "Sync"))
+                NightCycleBtn:SetDesc(cycleInfo.NightStatus)
 
                 local detected = Modules.Predictor.DetectedEggs or {}
-                local rareCount = 0
-                local highTierList = {}
+                local counts = Modules.Predictor.RarityCounts or {}
 
+                local rareTotal = (counts.Divine or 0) + (counts.Eternal or 0) + (counts.Secret or 0)
+                RareCountBtn:SetDesc(string.format("%d Divine, %d Eternal, %d Secret", counts.Divine or 0, counts.Eternal or 0, counts.Secret or 0))
+                StatusScanBtn:SetDesc(string.format("Total: %d eggs tracked in server", #detected))
+
+                -- Extract top high-tier eggs
+                local highTierList = {}
                 for _, egg in ipairs(detected) do
                     if egg.Rank >= 8 then
-                        rareCount = rareCount + 1
                         table.insert(highTierList, egg)
                     end
                 end
-
-                RareCountBtn:SetDesc(string.format("%d rare egg%s active", rareCount, rareCount == 1 and "" or "s"))
-                StatusScanBtn:SetDesc(string.format("Tracking %d total eggs (100%%)", #detected))
 
                 -- Update Target Slots
                 local slots = { EggSlot1, EggSlot2, EggSlot3 }
@@ -522,14 +550,14 @@ function UILayout.Build(WindUI, HubState, Helpers, Modules)
                             end
                         end)
                         btn:SetTitle(string.format("[%s] %s", egg.Rarity:upper(), egg.Pet))
-                        btn:SetDesc(string.format("Dist: %d studs · Mutation: %s · Tap to Steal!", dist, egg.Mutation or "None"))
+                        btn:SetDesc(string.format("Loc: %s · Dist: %d studs · Tap to Steal!", egg.Location or "Nest", dist))
                         btn.Callback = function()
-                            Notify(WindUI, "Stealing " .. egg.Pet .. "...", "Teleporting to target!", "solar:bolt-bold", 2)
+                            Notify(WindUI, "Stealing " .. egg.Pet .. "...", "Teleporting to " .. (egg.Location or "target") .. "!", "solar:bolt-bold", 2)
                             Modules.Predictor.StealTargetEgg(egg, Helpers, HubState)
                         end
                     elseif btn then
                         btn:SetTitle(string.format("Target %d: No Rare Egg", i))
-                        btn:SetDesc(i == 1 and "No Secret/Eternal/Divine in server yet" or "Waiting for next spawn cycle")
+                        btn:SetDesc(i == 1 and (rareTotal == 0 and "No Secret/Eternal/Divine in server yet" or "Scanning...") or "Waiting for next spawn cycle")
                         btn.Callback = function() end
                     end
                 end
